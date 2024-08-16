@@ -1,4 +1,3 @@
-import './App.css'
 import CanvasContainer from './components/CanvasContainer'
 
 function App() {
