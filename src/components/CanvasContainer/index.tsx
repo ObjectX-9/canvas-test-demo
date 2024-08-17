@@ -108,7 +108,7 @@ const CanvasContainer = () => {
       const endX = startX + viewportWidth + step;
       const endY = startY + viewportHeight + step;
 
-      // 绘制水平和垂直线a
+      // 绘制水平和垂直线
       for (let x = startX; x <= endX; x += step) {
         ctx.beginPath();
         ctx.moveTo(x, startY);
@@ -148,32 +148,35 @@ const CanvasContainer = () => {
       ctx.font = `12px Arial`; // 固定字体大小
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      console.log("✅ ~ offset:", offset);
+
+      // 获取当前视口范围
+      const viewportWidth = canvas.width;
+      const viewportHeight = canvas.height;
 
       // 顶部标尺
-      const startX =
-        Math.floor(offset.x / scale / rulerStep) * rulerStep * scale;
-
-      for (let x = startX; x < canvas.width; x += rulerStep * scale) {
-        const sceneX = Math.round((x - offset.x) / scale);
-        console.log("✅ ~ sceneX:", sceneX);
+      const startX = Math.floor(-offset.x / scale / rulerStep) * rulerStep;
+      const endX = startX + viewportWidth / scale + rulerStep;
+      for (let x = startX; x <= endX; x += rulerStep) {
+        const screenX = x * scale + offset.x;
+        const sceneX = Math.round(x);
         ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, 10); // 标尺高度为10像素
+        ctx.moveTo(screenX, 0);
+        ctx.lineTo(screenX, 10); // 标尺高度为10像素
         ctx.stroke();
-        ctx.fillText(`${sceneX}`, x, 20); // 显示刻度数值
+        ctx.fillText(`${sceneX}`, screenX, 20); // 显示刻度数值
       }
 
       // 左侧标尺
-      const startY =
-        Math.floor(offset.y / scale / rulerStep) * rulerStep * scale;
-      for (let y = startY; y < canvas.height; y += rulerStep * scale) {
-        const sceneY = Math.round((y - offset.y) / scale);
+      const startY = Math.floor(-offset.y / scale / rulerStep) * rulerStep;
+      const endY = startY + viewportHeight / scale + rulerStep;
+      for (let y = startY; y <= endY; y += rulerStep) {
+        const screenY = y * scale + offset.y;
+        const sceneY = Math.round(y);
         ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(10, y); // 标尺高度为10像素
+        ctx.moveTo(0, screenY);
+        ctx.lineTo(10, screenY); // 标尺高度为10像素
         ctx.stroke();
-        ctx.fillText(`${sceneY}`, 20, y); // 显示刻度数值
+        ctx.fillText(`${sceneY}`, 20, screenY); // 显示刻度数值
       }
     };
 
