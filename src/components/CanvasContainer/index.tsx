@@ -18,7 +18,7 @@ const CanvasContainer = () => {
   const handleWheel = (event: WheelEvent) => {
     event.preventDefault();
 
-    const zoomFactor = 0.01; // 缩放速率调整为0.05
+    const zoomFactor = 0.01; // 缩放速率调整为0.01
     const scaleChange = event.deltaY > 0 ? 1 - zoomFactor : 1 + zoomFactor;
     const newScale = Math.min(Math.max(0.1, scale * scaleChange), 5); // 确保缩放比例不会小于0.1
 
@@ -64,6 +64,7 @@ const CanvasContainer = () => {
     const canvas = canvasRef.current;
     if (canvas && canvas.getContext) {
       const ctx = canvas.getContext("2d");
+      console.log("✅ ~ ctx:", ctx);
       if (ctx) {
         canvas2DContext = ctx;
         canvas.addEventListener("mousedown", handleMouseDownCanvas);

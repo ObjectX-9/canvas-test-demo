@@ -1,12 +1,11 @@
-import CanvasContainer from './components/CanvasContainer'
+import CanvasContainer from "./components/CanvasContainer";
 
 function App() {
-
   return (
     <>
-      <CanvasContainer/>
+      <CanvasContainer />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
