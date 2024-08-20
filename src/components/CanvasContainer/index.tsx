@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { initJsdState } from "../../core/init/init";
+import { viewStore } from "../../core/store/ViewStore";
 
 let canvas2DContext: CanvasRenderingContext2D;
 
@@ -9,7 +11,8 @@ export const getCanvas2D = () => {
 const CanvasContainer = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scale, setScale] = useState(1); // 缩放比例
-  const [offset, setOffset] = useState({ x: 0, y: 0 }); // 画布平移偏移量
+  const [offset, setOffset] = useState({ x: viewStore.getView().pageX, y: viewStore.getView().pageY }); // 画布平移偏移量
+  console.log("✅ ✅ ✅ ~  offset:", offset);
   const [zoomIndicator, setZoomIndicator] = useState("100%"); // 缩放标识
   const isDragging = useRef(false);
   const lastMousePosition = useRef({ x: 0, y: 0 });
