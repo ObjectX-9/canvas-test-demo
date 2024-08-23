@@ -3,6 +3,7 @@ import { viewStore } from "../../core/store/ViewStore";
 import { drawRect } from "../../core/render/drawRect";
 import { DirectKey, uniformScale } from "../../core/utils/uniformScale";
 import { mat3 } from "gl-matrix";
+import avatar from '../../assets/avatar.jpg';
 
 let canvas2DContext: CanvasRenderingContext2D;
 
@@ -195,17 +196,34 @@ const CanvasContainer = () => {
   useEffect(() => {
     const ctx = getCanvas2D();
     const canvas = canvasRef.current as HTMLCanvasElement;
-    const render = () => {
-      drawScene(ctx, canvas);
-      requestRef.current = requestAnimationFrame(render);
+  
+    const svgData = `
+      <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
+      </svg>
+    `;
+  
+    const img = new Image();
+    img.onload = function() {
+      ctx.drawImage(img, 100, 100);
     };
-    requestRef.current = requestAnimationFrame(render);
+    // 将SVG字符串转换为Data URI格式
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
 
-    return () => {
-      if (requestRef.current) {
-        cancelAnimationFrame(requestRef.current);
-      }
+
+
+
+    const img2 = new Image();
+
+    // 图片加载完成后绘制到Canvas
+    img2.onload = function() {
+      ctx.drawImage(img2, 200, 100, 100, 100);
     };
+
+    // 设置图片的相对路径（相对于HTML文件的路径）
+    img2.src = avatar;
+    
+    drawScene(ctx, canvas);
   }, [scale, offset, ratio, scaleCenter]);
 
 
