@@ -4,6 +4,7 @@ import { drawRect } from "../../core/render/drawRect";
 import { DirectKey, uniformScale } from "../../core/utils/uniformScale";
 import avatar from "../../assets/avatar.png";
 import { nodeTree } from "../../core/nodeTree";
+import { RectangleState } from "../../core/types/nodes/rectangle";
 
 let canvas2DContext: CanvasRenderingContext2D;
 
@@ -128,7 +129,7 @@ const CanvasContainer = () => {
         case "rectangle": {
           drawRect(ctx, {
             transform: uniformScaleMat,
-            state: value,
+            state: value as RectangleState,
           });
         }
       }

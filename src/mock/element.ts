@@ -1,6 +1,4 @@
-import { BaseState } from "../core/types/nodes/baseState";
-
-export function getBasicElement(): Record<string, BaseState> {
+export function getBasicElement(): Record<string, any> {
   return {
     "1": {
       id: "1",
@@ -10,6 +8,7 @@ export function getBasicElement(): Record<string, BaseState> {
       y: 100,
       w: 100,
       h: 100,
+      radius: 0,
       rotation: 0,
     },
     "2": {
@@ -20,6 +19,7 @@ export function getBasicElement(): Record<string, BaseState> {
       y: 200,
       w: 100,
       h: 100,
+      radius: 0,
       rotation: 0,
     },
   };
