@@ -1,15 +1,16 @@
 /* eslint-disable */
-import type { BaseNodeType, UnionBaseState } from "@jsd-core/type";
+import { ElementCollections } from "../types";
+import { BaseState } from "../types/nodes/baseState";
 
 class ElementStore {
-  private state: Record<string, UnionBaseState> = {}
+  private state: ElementCollections = {};
 
-  constructor(elementState: Record<string, UnionBaseState>) {
-    this.state = elementState
+  constructor(elementState: ElementCollections) {
+    this.state = elementState;
   }
 
-  setElement(elementState: Record<string, UnionBaseState>) {
-    this.state = elementState
+  setElement(elementState: ElementCollections) {
+    this.state = elementState;
   }
 
   /**
@@ -41,8 +42,8 @@ class ElementStore {
    * @param {boolean} [_noEmit=false]
    * @memberof ElementStoreStatic
    */
-  addElement<T extends BaseNodeType>(id: string, elementState: UnionBaseState<T>) {
-    this.state[id] = elementState as UnionBaseState<T>;
+  addElement(id: string, elementState: BaseState) {
+    this.state[id] = elementState as BaseState;
   }
   /**
    * [ 删除单个组件 ]
@@ -58,11 +59,9 @@ class ElementStore {
     }
   }
 
-  static instanceStore() {
-
-  }
+  static instanceStore() {}
 }
 
 // 创建一个store
 
-export const elementStore = new ElementStore({})
+export const elementStore = new ElementStore({});

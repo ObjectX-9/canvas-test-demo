@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { viewStore } from "../../core/store/ViewStore";
 import { drawRect } from "../../core/render/drawRect";
 import { DirectKey, uniformScale } from "../../core/utils/uniformScale";
-import { mat3 } from "gl-matrix";
-import avatar from '../../assets/avatar.jpg';
+import avatar from "../../assets/avatar.png";
+import { nodeTree } from "../../core/nodeTree";
 
 let canvas2DContext: CanvasRenderingContext2D;
 
@@ -14,13 +14,15 @@ export const getCanvas2D = () => {
 const CanvasContainer = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scale, setScale] = useState(1); // 缩放比例
-  const [offset, setOffset] = useState({ x: viewStore.getView().pageX, y: viewStore.getView().pageY }); // 画布平移偏移量
+  const [offset, setOffset] = useState({
+    x: viewStore.getView().pageX,
+    y: viewStore.getView().pageY,
+  }); // 画布平移偏移量
   const [zoomIndicator, setZoomIndicator] = useState("100%"); // 缩放标识
   const [ratio, setRatio] = useState(1); // 比例尺
-  const [scaleCenter, setScaleCenter] = useState<DirectKey>('CC'); // 缩放中心
+  const [scaleCenter, setScaleCenter] = useState<DirectKey>("CC"); // 缩放中心
   const isDragging = useRef(false);
   const lastMousePosition = useRef({ x: 0, y: 0 });
-  const requestRef = useRef<number | null>(null);
 
   // 处理缩放
   const handleWheel = (event: WheelEvent) => {
@@ -68,19 +70,22 @@ const CanvasContainer = () => {
     isDragging.current = false;
   };
 
-  const drawScene = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+  const drawScene = (
+    ctx: CanvasRenderingContext2D,
+    canvas: HTMLCanvasElement
+  ) => {
     // 清空画布
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     // 保存当前状态并应用缩放和平移
     ctx.save();
 
     ctx.setTransform(
-      scale,    // a
-      0,        // b
-      0,        // c
-      scale,    // d
+      scale, // a
+      0, // b
+      0, // c
+      scale, // d
       offset.x, // e (平移 x 轴)
-      offset.y  // f (平移 y 轴)
+      offset.y // f (平移 y 轴)
     );
 
     // 绘制网格
@@ -115,13 +120,19 @@ const CanvasContainer = () => {
     // 等比缩放计算
     const uniformScaleMat = uniformScale({ ratio, scaleCenter });
 
-    drawRect(ctx, {
-      transform: mat3.mul(
-        mat3.create(),
-        mat3.fromTranslation(mat3.create(), [100, 100]),
-        uniformScaleMat
-      )
-    });
+    const nodes = nodeTree.getAllNodes();
+    // 遍历 map 获取每个 value
+    for (const [key, value] of nodes) {
+      console.log("✅ ~ value:", key, value);
+      switch (value.type) {
+        case "rectangle": {
+          drawRect(ctx, {
+            transform: uniformScaleMat,
+            state: value,
+          });
+        }
+      }
+    }
 
     ctx.restore(); // 恢复初始状态以确保其他元素不受影响
 
@@ -129,7 +140,10 @@ const CanvasContainer = () => {
     drawRulers(ctx, canvas);
   };
 
-  const drawRulers = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+  const drawRulers = (
+    ctx: CanvasRenderingContext2D,
+    canvas: HTMLCanvasElement
+  ) => {
     // 计算标尺步长，确保步长为10的倍数
     let rulerStep = 10;
     while (rulerStep * scale < 50) {
@@ -196,36 +210,32 @@ const CanvasContainer = () => {
   useEffect(() => {
     const ctx = getCanvas2D();
     const canvas = canvasRef.current as HTMLCanvasElement;
-  
+
     const svgData = `
       <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
         <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
       </svg>
     `;
-  
+
     const img = new Image();
-    img.onload = function() {
+    img.onload = function () {
       ctx.drawImage(img, 100, 100);
     };
     // 将SVG字符串转换为Data URI格式
-    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
-
-
-
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgData);
 
     const img2 = new Image();
 
     // 图片加载完成后绘制到Canvas
-    img2.onload = function() {
+    img2.onload = function () {
       ctx.drawImage(img2, 200, 100, 100, 100);
     };
 
     // 设置图片的相对路径（相对于HTML文件的路径）
     img2.src = avatar;
-    
+
     drawScene(ctx, canvas);
   }, [scale, offset, ratio, scaleCenter]);
-
 
   return (
     <div style={{ position: "relative" }}>
@@ -279,7 +289,7 @@ const CanvasContainer = () => {
             id="scaleCenter"
             value={scaleCenter}
             onChange={(e) => {
-              return setScaleCenter(e.target.value as DirectKey)
+              return setScaleCenter(e.target.value as DirectKey);
             }}
           >
             <option value="LT">左上</option>
