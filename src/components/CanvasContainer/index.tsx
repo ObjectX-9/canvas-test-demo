@@ -5,12 +5,23 @@ import { DirectKey, uniformScale } from "../../core/utils/uniformScale";
 import avatar from "../../assets/avatar.png";
 import { nodeTree } from "../../core/nodeTree";
 import { RectangleState } from "../../core/types/nodes/rectangle";
+import { RenderManager } from "../../core/render/renderManager";
+import { CanvasRenderer } from "../../core/render";
+import { Rectangle } from "../../core/nodeTree/node/rectangle";
+import { BaseNode } from "../../core/nodeTree/node/baseNode";
 
 let canvas2DContext: CanvasRenderingContext2D;
+let render: RenderManager;
 
 export const getCanvas2D = () => {
   return canvas2DContext;
 };
+
+export const getRenderManager = () => {
+  return render;
+};
+
+let hoveredNode: BaseNode | undefined;
 
 const CanvasContainer = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,7 +35,6 @@ const CanvasContainer = () => {
   const [scaleCenter, setScaleCenter] = useState<DirectKey>("CC"); // 缩放中心
   const isDragging = useRef(false);
   const lastMousePosition = useRef({ x: 0, y: 0 });
-
   // 处理缩放
   const handleWheel = (event: WheelEvent) => {
     event.preventDefault();
@@ -65,6 +75,35 @@ const CanvasContainer = () => {
 
       lastMousePosition.current = { x: event.clientX, y: event.clientY };
     }
+
+    const allNodes = nodeTree.getAllNodes();
+    // 屏幕坐标转画布坐标
+    const canvasX = (event.clientX - offset.x) / scale;
+    const canvasY = (event.clientY - offset.y) / scale;
+
+    // 判断鼠标是否在节点上
+    const isPointerInsideNode = (node: BaseNode, x: number, y: number) => {
+      return (
+        x >= node.x &&
+        x <= node.x + node.w &&
+        y >= node.y &&
+        y <= node.y + node.h
+      );
+    };
+
+    for (const node of allNodes) {
+      if (
+        (!hoveredNode || hoveredNode.id !== node.id) &&
+        isPointerInsideNode(node, canvasX, canvasY)
+      ) {
+        console.log("鼠标在节点上:", hoveredNode);
+
+        hoveredNode = node;
+        hoveredNode.changeFills();
+        break;
+      }
+    }
+    console.log("画布位置", canvasX, canvasY);
   };
 
   const handleMouseUpCanvas = () => {
@@ -119,21 +158,20 @@ const CanvasContainer = () => {
     }
 
     // 等比缩放计算
-    const uniformScaleMat = uniformScale({ ratio, scaleCenter });
+    // const uniformScaleMat = uniformScale({ ratio, scaleCenter });
 
-    const nodes = nodeTree.getAllNodes();
-    // 遍历 map 获取每个 value
-    for (const [key, value] of nodes) {
-      console.log("✅ ~ value:", key, value);
-      switch (value.type) {
-        case "rectangle": {
-          drawRect(ctx, {
-            transform: uniformScaleMat,
-            state: value as RectangleState,
-          });
-        }
-      }
-    }
+    // const nodes = nodeTree.getAllNodes();
+    // // 遍历 map 获取每个 value
+    // for (const [key, value] of nodes) {
+    //   switch (value.type) {
+    //     case "rectangle": {
+    //       drawRect(ctx, {
+    //         transform: uniformScaleMat,
+    //         state: value as RectangleState,
+    //       });
+    //     }
+    //   }
+    // }
 
     ctx.restore(); // 恢复初始状态以确保其他元素不受影响
 
@@ -237,6 +275,35 @@ const CanvasContainer = () => {
 
     drawScene(ctx, canvas);
   }, [scale, offset, ratio, scaleCenter]);
+
+  useEffect(() => {
+    if (!canvasRef.current) return; // 确保 canvasRef.current 存在
+    const canvas = canvasRef.current as HTMLCanvasElement;
+    const renderManager = new RenderManager(canvas as HTMLCanvasElement);
+
+    const canvasRenderer = new CanvasRenderer();
+
+    // 切换到 Canvas 渲染
+    renderManager.setRenderEngine(canvasRenderer);
+    renderManager.render(getCanvas2D(), scale, offset);
+    render = renderManager;
+    return () => {
+      renderManager.destroy();
+    };
+  }, [canvasRef, scale, offset]);
+
+  useEffect(() => {
+    if (render) {
+      const allNodes = nodeTree.getAllNodes();
+      allNodes.forEach((node) => {
+        switch (node.type) {
+          case "rectangle": {
+            render.getRenderEngine().drawRectangle(node as Rectangle);
+          }
+        }
+      });
+    }
+  }, [render]);
 
   return (
     <div style={{ position: "relative" }}>

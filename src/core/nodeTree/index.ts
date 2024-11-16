@@ -1,6 +1,8 @@
+import { getRenderManager } from "../../components/CanvasContainer";
 import { ElementCollections } from "../types";
 import { BaseState } from "../types/nodes/baseState";
 import { RectangleState } from "../types/nodes/rectangle";
+import { BaseNode } from "./node/baseNode";
 import { Rectangle } from "./node/rectangle";
 
 export class NodeTree {
@@ -23,7 +25,7 @@ export class NodeTree {
   }
 
   getAllNodes() {
-    return this.nodes;
+    return Array.from(this.nodes.values()) as unknown as BaseNode[];
   }
 
   createAllElements(elements: ElementCollections) {

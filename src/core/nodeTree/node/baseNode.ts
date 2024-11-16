@@ -15,6 +15,10 @@ export class BaseNode {
     return this._state.fill ?? "#eeffaa";
   }
 
+  set fill(fill: string) {
+    this._state.fill = fill;
+  }
+
   get type() {
     return this._state.type ?? "base";
   }
@@ -28,14 +32,18 @@ export class BaseNode {
   }
 
   get w() {
-    return this._state.x ?? 0;
+    return this._state.w ?? 0;
   }
 
   get h() {
-    return this._state.y ?? 0;
+    return this._state.h ?? 0;
   }
 
   get rotation() {
     return this._state.rotation ?? 0;
+  }
+
+  changeFills() {
+    this.fill = "#eeddss";
   }
 }

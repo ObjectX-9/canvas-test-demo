@@ -23,7 +23,6 @@ export function initJsdState(state: State) {
   elementStore.setElement(state.element as ElementCollections);
   viewStore.setView(state.view as ViewType);
   // JsNodeTree.createProjectNode();
-  console.log("✅ ✅ ✅ ~  state:", state);
 
   // 创建节点树
   nodeTree.createAllElements(state.element as ElementCollections);

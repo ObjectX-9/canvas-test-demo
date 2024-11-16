@@ -22,5 +22,17 @@ export function getBasicElement(): Record<string, any> {
       radius: 0,
       rotation: 0,
     },
+
+    "3": {
+      id: "3",
+      type: "rectangle",
+      fill: "#ffaagg",
+      x: 100,
+      y: 200,
+      w: 100,
+      h: 100,
+      radius: 0,
+      rotation: 0,
+    },
   };
 }

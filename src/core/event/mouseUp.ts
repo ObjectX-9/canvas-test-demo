@@ -1,3 +1,1 @@
-export const handleMouseUp = () => {
-  console.log("✅ ✅ ✅ ~  handleMouseUp:", handleMouseUp);
-}
+export const handleMouseUp = () => {};

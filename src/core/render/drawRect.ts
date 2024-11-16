@@ -18,7 +18,6 @@ export const drawRect = (
 
   // 计算新矩阵
   const newMat = mat3.mul(mat3.create(), transform, defaultMat);
-  console.log("✅ ✅ ✅ ~  transform:", transform);
 
   // // 应用矩阵变换
   canvas.transform(

@@ -1,3 +1,1 @@
-export const handleMouseMove = (event: MouseEvent) => {
-  console.log("✅ ~ event:", event);
-};
+export const handleMouseMove = (event: MouseEvent) => {};
