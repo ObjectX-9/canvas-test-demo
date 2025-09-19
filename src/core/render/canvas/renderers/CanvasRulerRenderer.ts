@@ -68,8 +68,8 @@ export class CanvasRulerRenderer implements IRulerRenderer {
           graphics.setFillStyle(this.textColor);
           graphics.setFont(`${this.fontSize}px Arial`);
           graphics.setTextAlign("center");
-          graphics.setTextBaseline("middle");
-          graphics.fillText(x.toString(), screenX, this.rulerSize / 2);
+          graphics.setTextBaseline("top");
+          graphics.fillText(x.toString(), screenX, this.rulerSize - 15);
         }
       }
     }
@@ -118,7 +118,7 @@ export class CanvasRulerRenderer implements IRulerRenderer {
         // 绘制数值
         if (y % (step * 5) === 0) {
           graphics.save();
-          graphics.translate(this.rulerSize / 2, screenY);
+          graphics.translate(this.rulerSize - 8, screenY);
           graphics.rotate(-Math.PI / 2);
 
           graphics.setFillStyle(this.textColor);
