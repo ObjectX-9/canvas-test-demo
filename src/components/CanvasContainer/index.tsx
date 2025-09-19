@@ -7,13 +7,13 @@ import {
 } from "../../core/manage";
 import { nodeTree } from "../../core/nodeTree";
 
-import { BaseNode } from "../../core/nodeTree/node/baseNode";
 import { Page } from "../../core/nodeTree/node/page";
 import { PagePanel } from "./PagePanel";
 import { mockElementData, initializeMockData } from "../../mock/element";
 import { RenderLoop } from "../../core/render/RenderLoop";
 import { globalDataObserver } from "../../core/render/DataObserver";
 import { globalRenderEngine } from "../../core/render";
+import { globalEventManager, initializeEventSystem } from "../../core/event";
 
 let canvas2DContext: CanvasRenderingContext2D;
 let renderLoop: RenderLoop;
@@ -25,8 +25,6 @@ export const getCanvas2D = () => {
 export const getRenderManager = () => {
   return null; // 不再使用RenderManager
 };
-
-let hoveredNode: BaseNode | undefined;
 
 const CanvasContainer = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -63,104 +61,6 @@ const CanvasContainer = () => {
     globalDataObserver.markChanged();
   };
 
-  // 处理缩放
-  const handleWheel = (event: WheelEvent) => {
-    event.preventDefault();
-
-    const currentView = coordinateSystemManager.getViewState();
-    const zoomFactor = 0.01; // 缩放速率调整为0.01
-    const scaleChange = event.deltaY > 0 ? 1 - zoomFactor : 1 + zoomFactor;
-    const newScale = Math.min(
-      Math.max(0.1, currentView.scale * scaleChange),
-      5
-    ); // 确保缩放比例不会小于0.1
-
-    const mouseX = event.clientX;
-    const mouseY = event.clientY;
-
-    // 使用坐标系统管理器进行以鼠标位置为中心的缩放
-    coordinateSystemManager.updateViewScale(newScale, mouseX, mouseY);
-
-    const updatedView = coordinateSystemManager.getViewState();
-    setViewState(updatedView);
-    setZoomIndicator(`${Math.round(newScale * 100)}%`);
-
-    // 同步视图状态到当前页面
-    if (currentPage) {
-      currentPage.zoom = newScale;
-      currentPage.panX = updatedView.pageX;
-      currentPage.panY = updatedView.pageY;
-    }
-
-    // 通知数据变更
-    globalDataObserver.markChanged();
-  };
-
-  const handleMouseDownCanvas = (event: MouseEvent) => {
-    isDragging.current = true;
-    lastMousePosition.current = { x: event.clientX, y: event.clientY };
-  };
-
-  const handleMouseMoveCanvas = (event: MouseEvent) => {
-    if (isDragging.current) {
-      const deltaX = event.clientX - lastMousePosition.current.x;
-      const deltaY = event.clientY - lastMousePosition.current.y;
-
-      // 使用坐标系统管理器更新视图位置
-      coordinateSystemManager.updateViewPosition(deltaX, deltaY);
-      const updatedView = coordinateSystemManager.getViewState();
-      setViewState(updatedView);
-
-      // 同步视图状态到当前页面
-      if (currentPage) {
-        currentPage.panX = updatedView.pageX;
-        currentPage.panY = updatedView.pageY;
-      }
-
-      // 通知数据变更
-      globalDataObserver.markChanged();
-
-      lastMousePosition.current = { x: event.clientX, y: event.clientY };
-    }
-
-    const allNodes = nodeTree.getAllNodes();
-    // 使用坐标系统管理器进行屏幕坐标转世界坐标
-    const worldPoint = coordinateSystemManager.screenToWorld(
-      event.clientX,
-      event.clientY
-    );
-    const canvasX = worldPoint.x;
-    const canvasY = worldPoint.y;
-
-    // 判断鼠标是否在节点上
-    const isPointerInsideNode = (node: BaseNode, x: number, y: number) => {
-      return (
-        x >= node.x &&
-        x <= node.x + node.w &&
-        y >= node.y &&
-        y <= node.y + node.h
-      );
-    };
-
-    for (const node of allNodes) {
-      if (
-        (!hoveredNode || hoveredNode.id !== node.id) &&
-        isPointerInsideNode(node, canvasX, canvasY)
-      ) {
-        console.log("鼠标在节点上:", hoveredNode);
-
-        hoveredNode = node;
-        hoveredNode.changeFills();
-        break;
-      }
-    }
-    console.log("画布位置", canvasX, canvasY);
-  };
-
-  const handleMouseUpCanvas = () => {
-    isDragging.current = false;
-  };
-
   // 渲染场景的回调函数
   const drawScene = useCallback(
     (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
@@ -175,26 +75,43 @@ const CanvasContainer = () => {
     [currentPage]
   );
 
+  // Canvas事件监听器
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas && canvas.getContext) {
       const ctx = canvas.getContext("2d");
       if (ctx) {
         canvas2DContext = ctx;
-        canvas.addEventListener("mousedown", handleMouseDownCanvas);
-        canvas.addEventListener("mousemove", handleMouseMoveCanvas);
-        canvas.addEventListener("mouseup", handleMouseUpCanvas);
-        canvas.addEventListener("wheel", handleWheel);
+
+        // 初始化事件系统（只在首次渲染时）
+        if (!globalEventManager.isInitialized()) {
+          initializeEventSystem();
+        }
+
+        // 创建事件上下文
+        const eventContext = {
+          canvas,
+          currentPage,
+          viewState,
+          isDragging,
+          lastMousePosition,
+          setViewState,
+          setZoomIndicator,
+        };
+
+        // 设置事件上下文
+        globalEventManager.setContext(eventContext);
+
+        // 绑定画布事件
+        globalEventManager.bindCanvasEvents(canvas);
 
         return () => {
-          canvas.removeEventListener("mousedown", handleMouseDownCanvas);
-          canvas.removeEventListener("mousemove", handleMouseMoveCanvas);
-          canvas.removeEventListener("mouseup", handleMouseUpCanvas);
-          canvas.removeEventListener("wheel", handleWheel);
+          // 解绑画布事件
+          globalEventManager.unbindCanvasEvents(canvas);
         };
       }
     }
-  }, [viewState]);
+  }, []);
 
   // 初始化渲染循环
   useEffect(() => {

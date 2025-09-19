@@ -64,6 +64,13 @@ export class RenderEngine {
 
     const { renderRulers = false, renderGrid = true, rulerRenderer } = options;
 
+    console.log(
+      "🎨 开始渲染页面:",
+      page.name,
+      "子节点数量:",
+      page.children.length
+    );
+
     // 1. 清空画布
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -79,6 +86,7 @@ export class RenderEngine {
     // 4. 保存状态并应用坐标变换
     ctx.save();
     const viewMatrix = coordinateSystemManager.getViewTransformMatrix();
+
     ctx.setTransform(
       viewMatrix[0],
       viewMatrix[1],
@@ -159,7 +167,6 @@ export class RenderEngine {
         }
       }
     }
-
     return nodes;
   }
 
