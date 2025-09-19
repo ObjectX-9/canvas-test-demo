@@ -10,7 +10,6 @@ export {
 
 export { PageManager, pageManager } from "./PageManager";
 
-export { RulerManager, rulerManager } from "./RulerManager";
+// RulerManager已删除，现在使用CanvasRulerRenderer
 
 export type { IUniformScale, DirectKey } from "../utils/uniformScale";
-export type { RulerConfig } from "./RulerManager";
