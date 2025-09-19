@@ -5,11 +5,13 @@ import { nodeTree } from "../../core/nodeTree";
 
 import { Page } from "../../core/nodeTree/node/page";
 import { PagePanel } from "./PagePanel";
+import { PropertyPanel } from "../PropertyPanel";
 import { mockElementData } from "../../mock/element";
 import { RenderLoop } from "../../core/render/RenderLoop";
 import { globalDataObserver } from "../../core/render/DataObserver";
 import { globalCanvasRenderEngine } from "../../core/render/canvas";
 import { globalEventManager, initializeEventSystem } from "../../core/event";
+import { selectionStore } from "../../core/store/SelectionStore";
 
 let canvas2DContext: CanvasRenderingContext2D;
 let renderLoop: RenderLoop;
@@ -89,6 +91,8 @@ const CanvasContainer = () => {
           viewState,
           isDragging,
           lastMousePosition,
+          selectionStore,
+          coordinateSystemManager,
           setViewState,
           setZoomIndicator,
         };
@@ -173,7 +177,7 @@ const CanvasContainer = () => {
   }, [viewState, ratio, scaleCenter, currentPage]);
 
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", display: "flex", height: "100vh" }}>
       {/* 页面管理面板 */}
       <PagePanel
         isVisible={showPagePanel}
@@ -204,107 +208,113 @@ const CanvasContainer = () => {
         {showPagePanel ? "◀" : "▶"} 页面
       </button>
 
-      <canvas
-        ref={canvasRef}
-        id="canvasContainer"
-        height={window.innerHeight}
-        width={window.innerWidth}
-        style={{ cursor: isDragging.current ? "grabbing" : "grab" }}
-      ></canvas>
-      <div
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 10,
-          backgroundColor: "rgba(0,0,0,0.8)",
-          color: "#fff",
-          padding: "12px 16px",
-          borderRadius: "6px",
-          fontSize: "14px",
-        }}
-      >
-        <div style={{ fontWeight: "600", marginBottom: "4px" }}>
-          当前页面: {currentPage?.name || "无"}
+      {/* 画布区域 */}
+      <div style={{ flex: 1, position: "relative" }}>
+        <canvas
+          ref={canvasRef}
+          id="canvasContainer"
+          height={window.innerHeight}
+          width={window.innerWidth - 280} // 减去属性面板的宽度
+          style={{ cursor: isDragging.current ? "grabbing" : "grab" }}
+        ></canvas>
+        <div
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            backgroundColor: "rgba(0,0,0,0.8)",
+            color: "#fff",
+            padding: "12px 16px",
+            borderRadius: "6px",
+            fontSize: "14px",
+          }}
+        >
+          <div style={{ fontWeight: "600", marginBottom: "4px" }}>
+            当前页面: {currentPage?.name || "无"}
+          </div>
+          <div style={{ marginBottom: "4px" }}>缩放: {zoomIndicator}</div>
+          <div style={{ fontSize: "12px", color: "#ccc", marginBottom: "4px" }}>
+            画布: {currentPage?.width || 0} × {currentPage?.height || 0}
+          </div>
+          <div style={{ fontSize: "11px", color: "#888" }}>FPS: {fps}</div>
         </div>
-        <div style={{ marginBottom: "4px" }}>缩放: {zoomIndicator}</div>
-        <div style={{ fontSize: "12px", color: "#ccc", marginBottom: "4px" }}>
-          画布: {currentPage?.width || 0} × {currentPage?.height || 0}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 10,
+            right: 10,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            color: "#fff",
+            padding: "10px",
+            borderRadius: "5px",
+          }}
+        >
+          <div>
+            <label htmlFor="ratio">比例尺: </label>
+            <input
+              type="range"
+              id="ratio"
+              min="0.1"
+              max="5"
+              step="0.1"
+              value={ratio}
+              onChange={(e) => setRatio(parseFloat(e.target.value))}
+            />
+            {ratio}
+          </div>
+          <div>
+            <label htmlFor="scaleCenter">缩放中心: </label>
+            <select
+              id="scaleCenter"
+              value={scaleCenter}
+              onChange={(e) => {
+                return setScaleCenter(e.target.value as DirectKey);
+              }}
+            >
+              <option value="LT">左上</option>
+              <option value="RT">右上</option>
+              <option value="RB">右下</option>
+              <option value="LB">左下</option>
+              <option value="TC">上</option>
+              <option value="BC">下</option>
+              <option value="LC">左</option>
+              <option value="RC">右</option>
+              <option value="CC">中</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="toggleRuler">标尺显示: </label>
+            <input
+              type="checkbox"
+              id="toggleRuler"
+              defaultChecked={true}
+              onChange={(e) => {
+                globalCanvasRenderEngine.toggleRuler(e.target.checked);
+                globalDataObserver.markChanged();
+              }}
+            />
+          </div>
+          <div>
+            <label htmlFor="rulerTheme">标尺主题: </label>
+            <select
+              id="rulerTheme"
+              defaultValue="light"
+              onChange={(e) => {
+                globalCanvasRenderEngine.setRulerTheme(
+                  e.target.value as "light" | "dark"
+                );
+                globalDataObserver.markChanged();
+              }}
+            >
+              <option value="light">浅色</option>
+              <option value="dark">深色</option>
+            </select>
+          </div>
         </div>
-        <div style={{ fontSize: "11px", color: "#888" }}>FPS: {fps}</div>
       </div>
-      <div
-        style={{
-          position: "absolute",
-          bottom: 10,
-          right: 10,
-          backgroundColor: "rgba(0,0,0,0.5)",
-          color: "#fff",
-          padding: "10px",
-          borderRadius: "5px",
-        }}
-      >
-        <div>
-          <label htmlFor="ratio">比例尺: </label>
-          <input
-            type="range"
-            id="ratio"
-            min="0.1"
-            max="5"
-            step="0.1"
-            value={ratio}
-            onChange={(e) => setRatio(parseFloat(e.target.value))}
-          />
-          {ratio}
-        </div>
-        <div>
-          <label htmlFor="scaleCenter">缩放中心: </label>
-          <select
-            id="scaleCenter"
-            value={scaleCenter}
-            onChange={(e) => {
-              return setScaleCenter(e.target.value as DirectKey);
-            }}
-          >
-            <option value="LT">左上</option>
-            <option value="RT">右上</option>
-            <option value="RB">右下</option>
-            <option value="LB">左下</option>
-            <option value="TC">上</option>
-            <option value="BC">下</option>
-            <option value="LC">左</option>
-            <option value="RC">右</option>
-            <option value="CC">中</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="toggleRuler">标尺显示: </label>
-          <input
-            type="checkbox"
-            id="toggleRuler"
-            defaultChecked={true}
-            onChange={(e) => {
-              globalCanvasRenderEngine.toggleRuler(e.target.checked);
-              globalDataObserver.markChanged();
-            }}
-          />
-        </div>
-        <div>
-          <label htmlFor="rulerTheme">标尺主题: </label>
-          <select
-            id="rulerTheme"
-            defaultValue="light"
-            onChange={(e) => {
-              globalCanvasRenderEngine.setRulerTheme(
-                e.target.value as "light" | "dark"
-              );
-              globalDataObserver.markChanged();
-            }}
-          >
-            <option value="light">浅色</option>
-            <option value="dark">深色</option>
-          </select>
-        </div>
-      </div>
+
+      {/* 属性面板 */}
+      <PropertyPanel />
     </div>
   );
 };

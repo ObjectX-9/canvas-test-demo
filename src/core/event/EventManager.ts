@@ -1,5 +1,7 @@
 import { Page } from "../nodeTree/node/page";
 import { ViewType } from "../types";
+import { SelectionStore } from "../store/SelectionStore";
+import { CoordinateSystemManager } from "../manage/CoordinateSystemManager";
 
 /**
  * 事件上下文接口
@@ -11,6 +13,8 @@ export interface EventContext {
   viewState: ViewType;
   isDragging: React.MutableRefObject<boolean>;
   lastMousePosition: React.MutableRefObject<{ x: number; y: number }>;
+  selectionStore: SelectionStore;
+  coordinateSystemManager: CoordinateSystemManager;
   setViewState: (state: ViewType) => void;
   setZoomIndicator: (zoom: string) => void;
 }

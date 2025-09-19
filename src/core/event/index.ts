@@ -8,13 +8,20 @@ export { MouseDownHandler } from "./mouseDown";
 export { MouseMoveHandler } from "./mouseMove";
 export { MouseUpHandler } from "./mouseUp";
 export { WheelHandler } from "./wheelHandler";
+export { NodeSelectionHandler } from "./nodeSelection";
+export { NodeDragHandler, NodeDragEndHandler } from "./nodeDrag";
 
 // 导出事件处理器工厂函数
 import { MouseDownHandler } from "./mouseDown";
 import { MouseMoveHandler } from "./mouseMove";
 import { MouseUpHandler } from "./mouseUp";
 import { WheelHandler } from "./wheelHandler";
+import { NodeSelectionHandler } from "./nodeSelection";
+import { NodeDragHandler, NodeDragEndHandler } from "./nodeDrag";
 import { IEventHandler } from "./EventManager";
+
+// 创建节点选择处理器实例（需要在其他处理器中共享）
+const nodeSelectionHandler = new NodeSelectionHandler();
 
 /**
  * 创建所有内置事件处理器
@@ -25,8 +32,14 @@ export function createBuiltinEventHandlers(): IEventHandler[] {
     new MouseMoveHandler(),
     new MouseUpHandler(),
     new WheelHandler(),
+    nodeSelectionHandler,
+    new NodeDragHandler(nodeSelectionHandler),
+    new NodeDragEndHandler(nodeSelectionHandler),
   ];
 }
+
+// 导出节点选择处理器供外部使用
+export { nodeSelectionHandler };
 
 /**
  * 初始化事件系统

@@ -2,6 +2,7 @@ import { BaseNode } from "../../nodeTree/node/baseNode";
 import { Rectangle } from "../../nodeTree/node/rectangle";
 import { BaseNodeRenderer } from "../NodeRenderer";
 import { IRenderContext } from "../interfaces/IGraphicsAPI";
+import { selectionStore } from "../../store/SelectionStore";
 
 /**
  * 矩形节点渲染器
@@ -20,6 +21,7 @@ export class RectangleRenderer extends BaseNodeRenderer<Rectangle> {
 
   renderNode(node: Rectangle, context: IRenderContext): boolean {
     const { graphics } = context;
+    const isSelected = selectionStore.isNodeSelected(node.id);
 
     this.withGraphicsState(context, () => {
       // 应用节点变换
@@ -29,9 +31,14 @@ export class RectangleRenderer extends BaseNodeRenderer<Rectangle> {
       graphics.setFillStyle(node.fill);
       graphics.fillRect(0, 0, node.w, node.h);
 
-      // 绘制边框
-      graphics.setStrokeStyle("#333");
-      graphics.setLineWidth(1);
+      // 绘制边框 - 选中时使用不同的样式
+      if (isSelected) {
+        graphics.setStrokeStyle("#0066cc");
+        graphics.setLineWidth(2);
+      } else {
+        graphics.setStrokeStyle("#333");
+        graphics.setLineWidth(1);
+      }
       graphics.strokeRect(0, 0, node.w, node.h);
 
       // 如果有圆角，绘制圆角矩形
@@ -43,12 +50,18 @@ export class RectangleRenderer extends BaseNodeRenderer<Rectangle> {
           node.w,
           node.h,
           node.radius,
-          node.fill
+          node.fill,
+          isSelected
         );
       }
 
       // 绘制标签
       this.drawLabel(graphics, node);
+
+      // 绘制选中状态的额外装饰
+      if (isSelected) {
+        this.drawSelectionHandles(graphics, node);
+      }
     });
 
     return true;
@@ -64,7 +77,8 @@ export class RectangleRenderer extends BaseNodeRenderer<Rectangle> {
     width: number,
     height: number,
     radius: number,
-    fillStyle: string
+    fillStyle: string,
+    isSelected?: boolean
   ): void {
     const r = Math.min(radius, width / 2, height / 2);
 
@@ -83,8 +97,13 @@ export class RectangleRenderer extends BaseNodeRenderer<Rectangle> {
     graphics.setFillStyle(fillStyle);
     graphics.fill();
 
-    graphics.setStrokeStyle("#333");
-    graphics.setLineWidth(1);
+    if (isSelected) {
+      graphics.setStrokeStyle("#0066cc");
+      graphics.setLineWidth(2);
+    } else {
+      graphics.setStrokeStyle("#333");
+      graphics.setLineWidth(1);
+    }
     graphics.stroke();
   }
 
@@ -105,6 +124,41 @@ export class RectangleRenderer extends BaseNodeRenderer<Rectangle> {
 
     // 绘制文本
     graphics.fillText(node.id, node.w / 2, node.h / 2);
+  }
+
+  /**
+   * 绘制选中状态的控制手柄
+   */
+  private drawSelectionHandles(
+    graphics: IRenderContext["graphics"],
+    node: Rectangle
+  ): void {
+    const handleSize = 6;
+    const handleColor = "#0066cc";
+    const handleBorderColor = "#ffffff";
+
+    // 控制手柄位置
+    const handles = [
+      { x: -handleSize / 2, y: -handleSize / 2 }, // 左上
+      { x: node.w / 2 - handleSize / 2, y: -handleSize / 2 }, // 上中
+      { x: node.w - handleSize / 2, y: -handleSize / 2 }, // 右上
+      { x: node.w - handleSize / 2, y: node.h / 2 - handleSize / 2 }, // 右中
+      { x: node.w - handleSize / 2, y: node.h - handleSize / 2 }, // 右下
+      { x: node.w / 2 - handleSize / 2, y: node.h - handleSize / 2 }, // 下中
+      { x: -handleSize / 2, y: node.h - handleSize / 2 }, // 左下
+      { x: -handleSize / 2, y: node.h / 2 - handleSize / 2 }, // 左中
+    ];
+
+    handles.forEach((handle) => {
+      // 绘制手柄背景
+      graphics.setFillStyle(handleColor);
+      graphics.fillRect(handle.x, handle.y, handleSize, handleSize);
+
+      // 绘制手柄边框
+      graphics.setStrokeStyle(handleBorderColor);
+      graphics.setLineWidth(1);
+      graphics.strokeRect(handle.x, handle.y, handleSize, handleSize);
+    });
   }
 
   /**
