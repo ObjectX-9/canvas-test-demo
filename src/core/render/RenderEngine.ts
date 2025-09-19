@@ -3,16 +3,25 @@ import { Page } from "../nodeTree/node/page";
 import { nodeTree } from "../nodeTree";
 import { coordinateSystemManager } from "../manage";
 import { RenderRegistry, globalRenderRegistry } from "./RenderRegistry";
-import { RenderContext, INodeRenderer } from "./NodeRenderer";
+import { INodeRenderer } from "./NodeRenderer";
 import { createBuiltinRenderers, createDefaultRenderer } from "./renderers";
+import { IGraphicsAPI, IRenderContext } from "./interfaces/IGraphicsAPI";
+import {
+  IGridRenderer,
+  IRulerRenderer,
+  IBackgroundRenderer,
+} from "./interfaces/IRenderer";
 
 /**
- * 渲染引擎
- * 负责整合页面渲染逻辑和节点渲染器系统
+ * 抽象渲染引擎
+ * 负责整合页面渲染逻辑和节点渲染器系统，不绑定到具体的渲染技术
  */
 export class RenderEngine {
   private registry: RenderRegistry;
   private initialized: boolean = false;
+  protected gridRenderer?: IGridRenderer;
+  protected rulerRenderer?: IRulerRenderer;
+  protected backgroundRenderer?: IBackgroundRenderer;
 
   constructor(registry?: RenderRegistry) {
     this.registry = registry || globalRenderRegistry;
@@ -39,30 +48,24 @@ export class RenderEngine {
   }
 
   /**
-   * 渲染完整页面
+   * 渲染完整页面（抽象方法）
    * @param page 要渲染的页面
-   * @param ctx Canvas渲染上下文
-   * @param canvas Canvas元素
+   * @param graphics 图形API
    * @param options 渲染选项
    */
   renderPage(
     page: Page,
-    ctx: CanvasRenderingContext2D,
-    canvas: HTMLCanvasElement,
+    graphics: IGraphicsAPI,
     options: {
       renderRulers?: boolean;
       renderGrid?: boolean;
-      rulerRenderer?: (
-        ctx: CanvasRenderingContext2D,
-        canvas: HTMLCanvasElement
-      ) => void;
     } = {}
   ): void {
     if (!this.initialized) {
       this.initialize();
     }
 
-    const { renderRulers = false, renderGrid = true, rulerRenderer } = options;
+    const { renderRulers = false, renderGrid = true } = options;
 
     console.log(
       "🎨 开始渲染页面:",
@@ -71,23 +74,35 @@ export class RenderEngine {
       page.children.length
     );
 
+    const canvasSize = graphics.getCanvasSize();
+    const viewState = coordinateSystemManager.getViewState();
+
     // 1. 清空画布
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    graphics.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
     // 2. 绘制页面背景色
-    ctx.fillStyle = page.backgroundColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (this.backgroundRenderer) {
+      this.backgroundRenderer.renderBackground(
+        graphics,
+        canvasSize,
+        page.backgroundColor
+      );
+    } else {
+      // 默认背景渲染
+      graphics.setFillStyle(page.backgroundColor);
+      graphics.fillRect(0, 0, canvasSize.width, canvasSize.height);
+    }
 
     // 3. 绘制标尺（在坐标变换之前）
-    if (renderRulers && rulerRenderer) {
-      rulerRenderer(ctx, canvas);
+    if (renderRulers && this.rulerRenderer) {
+      this.rulerRenderer.renderRulers(graphics, canvasSize, viewState);
     }
 
     // 4. 保存状态并应用坐标变换
-    ctx.save();
+    graphics.save();
     const viewMatrix = coordinateSystemManager.getViewTransformMatrix();
 
-    ctx.setTransform(
+    graphics.setTransform(
       viewMatrix[0],
       viewMatrix[1],
       viewMatrix[3],
@@ -97,15 +112,15 @@ export class RenderEngine {
     );
 
     // 5. 绘制网格
-    if (renderGrid) {
-      this.renderGrid(ctx, canvas);
+    if (renderGrid && this.gridRenderer) {
+      this.gridRenderer.renderGrid(graphics, canvasSize, viewState);
     }
 
     // 6. 创建渲染上下文
-    const context: RenderContext = {
-      ctx,
-      canvas,
-      viewMatrix: coordinateSystemManager.getViewTransformMatrix(),
+    const context: IRenderContext = {
+      graphics,
+      canvasSize,
+      viewMatrix: Array.from(coordinateSystemManager.getViewTransformMatrix()),
       scale: coordinateSystemManager.getViewState().scale,
     };
 
@@ -122,28 +137,23 @@ export class RenderEngine {
     }
 
     // 8. 恢复坐标变换
-    ctx.restore();
+    graphics.restore();
   }
 
   /**
    * 渲染单个节点
    * @param node 要渲染的节点
-   * @param ctx Canvas渲染上下文
-   * @param canvas Canvas元素
+   * @param graphics 图形API
    */
-  renderNode(
-    node: BaseNode,
-    ctx: CanvasRenderingContext2D,
-    canvas: HTMLCanvasElement
-  ): boolean {
+  renderNode(node: BaseNode, graphics: IGraphicsAPI): boolean {
     if (!this.initialized) {
       this.initialize();
     }
 
-    const context: RenderContext = {
-      ctx,
-      canvas,
-      viewMatrix: coordinateSystemManager.getViewTransformMatrix(),
+    const context: IRenderContext = {
+      graphics,
+      canvasSize: graphics.getCanvasSize(),
+      viewMatrix: Array.from(coordinateSystemManager.getViewTransformMatrix()),
       scale: coordinateSystemManager.getViewState().scale,
     };
 
@@ -213,45 +223,24 @@ export class RenderEngine {
   }
 
   /**
-   * 渲染网格
-   * @param ctx Canvas渲染上下文
-   * @param canvas Canvas元素
+   * 设置网格渲染器
    */
-  private renderGrid(
-    ctx: CanvasRenderingContext2D,
-    canvas: HTMLCanvasElement
-  ): void {
-    const currentView = coordinateSystemManager.getViewState();
-    const step = 25;
+  setGridRenderer(renderer: IGridRenderer): void {
+    this.gridRenderer = renderer;
+  }
 
-    ctx.strokeStyle = "#ddd";
-    ctx.lineWidth = 1 / currentView.scale;
+  /**
+   * 设置标尺渲染器
+   */
+  setRulerRenderer(renderer: IRulerRenderer): void {
+    this.rulerRenderer = renderer;
+  }
 
-    const viewportWidth = canvas.width / currentView.scale;
-    const viewportHeight = canvas.height / currentView.scale;
-
-    const startX =
-      Math.floor(-currentView.pageX / currentView.scale / step) * step;
-    const startY =
-      Math.floor(-currentView.pageY / currentView.scale / step) * step;
-    const endX = startX + viewportWidth + step;
-    const endY = startY + viewportHeight + step;
-
-    // 绘制垂直线
-    for (let x = startX; x <= endX; x += step) {
-      ctx.beginPath();
-      ctx.moveTo(x, startY);
-      ctx.lineTo(x, endY);
-      ctx.stroke();
-    }
-
-    // 绘制水平线
-    for (let y = startY; y <= endY; y += step) {
-      ctx.beginPath();
-      ctx.moveTo(startX, y);
-      ctx.lineTo(endX, y);
-      ctx.stroke();
-    }
+  /**
+   * 设置背景渲染器
+   */
+  setBackgroundRenderer(renderer: IBackgroundRenderer): void {
+    this.backgroundRenderer = renderer;
   }
 }
 

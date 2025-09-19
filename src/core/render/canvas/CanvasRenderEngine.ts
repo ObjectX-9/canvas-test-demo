@@ -1,6 +1,9 @@
 import { RenderEngine } from "../RenderEngine";
 import { Page } from "../../nodeTree/node/page";
 import { BaseNode } from "../../nodeTree/node/baseNode";
+import { Canvas2DGraphics } from "./Canvas2DGraphics";
+import { CanvasGridRenderer } from "./renderers/CanvasGridRenderer";
+import { CanvasBackgroundRenderer } from "./renderers/CanvasBackgroundRenderer";
 
 /**
  * Canvas 2D 专用渲染引擎
@@ -34,6 +37,10 @@ export class CanvasRenderEngine extends RenderEngine {
     // 初始化通用渲染引擎
     this.initialize();
 
+    // 设置Canvas专用渲染器
+    this.setGridRenderer(new CanvasGridRenderer());
+    this.setBackgroundRenderer(new CanvasBackgroundRenderer());
+
     this.canvasInitialized = true;
     console.log("✅ Canvas渲染引擎已初始化", {
       canvasSize: `${canvas.width}x${canvas.height}`,
@@ -63,8 +70,11 @@ export class CanvasRenderEngine extends RenderEngine {
       );
     }
 
-    // 使用通用渲染引擎的renderPage，传入Canvas上下文
-    this.renderPage(page, this.ctx, this.canvas, options);
+    // 创建Canvas 2D图形API适配器
+    const graphics = new Canvas2DGraphics(this.ctx, this.canvas);
+
+    // 使用通用渲染引擎的renderPage
+    this.renderPage(page, graphics, options);
   }
 
   /**
@@ -78,8 +88,11 @@ export class CanvasRenderEngine extends RenderEngine {
       );
     }
 
-    // 使用通用渲染引擎的renderNode，传入Canvas上下文
-    return this.renderNode(node, this.ctx, this.canvas);
+    // 创建Canvas 2D图形API适配器
+    const graphics = new Canvas2DGraphics(this.ctx, this.canvas);
+
+    // 使用通用渲染引擎的renderNode
+    return this.renderNode(node, graphics);
   }
 
   /**

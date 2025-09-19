@@ -12,7 +12,7 @@ import { PagePanel } from "./PagePanel";
 import { mockElementData } from "../../mock/element";
 import { RenderLoop } from "../../core/render/RenderLoop";
 import { globalDataObserver } from "../../core/render/DataObserver";
-import { globalRenderEngine } from "../../core/render";
+import { globalCanvasRenderEngine } from "../../core/render/canvas";
 import { globalEventManager, initializeEventSystem } from "../../core/event";
 
 let canvas2DContext: CanvasRenderingContext2D;
@@ -61,12 +61,12 @@ const CanvasContainer = () => {
 
   // 渲染场景的回调函数
   const drawScene = useCallback(
-    (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+    (_ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
       if (currentPage) {
-        globalRenderEngine.renderPage(currentPage, ctx, canvas, {
+        globalCanvasRenderEngine.initializeCanvas(canvas);
+        globalCanvasRenderEngine.renderCanvasPage(currentPage, {
           renderRulers: true,
           renderGrid: true,
-          rulerRenderer: (ctx, canvas) => rulerManager.render(ctx, canvas),
         });
       }
     },

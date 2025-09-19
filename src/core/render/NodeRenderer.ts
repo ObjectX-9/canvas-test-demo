@@ -1,4 +1,5 @@
 import { BaseNode } from "../nodeTree/node/baseNode";
+import { IGraphicsAPI } from "./interfaces/IGraphicsAPI";
 
 /**
  * 渲染上下文接口
@@ -97,17 +98,38 @@ export abstract class BaseNodeRenderer<T extends BaseNode = BaseNode>
    * 辅助方法：应用节点变换
    */
   protected applyNodeTransform(node: T, context: RenderContext): void {
-    const { ctx } = context;
+    // 兼容新旧接口
+    const graphics: IGraphicsAPI | null =
+      "graphics" in context ? (context as any).graphics : null;
+    const ctx: CanvasRenderingContext2D | null =
+      "ctx" in context ? (context as RenderContext).ctx : null;
 
-    // 应用位置变换
-    ctx.translate(node.x + node.w / 2, node.y + node.h / 2);
-
-    // 应用旋转
-    if (node.rotation !== 0) {
-      ctx.rotate((node.rotation * Math.PI) / 180);
+    if (!graphics && !ctx) {
+      console.error("渲染上下文缺少图形接口");
+      return;
     }
 
-    // 移回原点
-    ctx.translate(-node.w / 2, -node.h / 2);
+    // 优先使用新的图形接口
+    if (graphics) {
+      // 应用位置变换
+      graphics.translate(node.x + node.w / 2, node.y + node.h / 2);
+
+      // 应用旋转
+      if (node.rotation !== 0) {
+        graphics.rotate((node.rotation * Math.PI) / 180);
+      }
+
+      // 移回原点
+      graphics.translate(-node.w / 2, -node.h / 2);
+    } else if (ctx) {
+      // 兼容旧接口
+      ctx.translate(node.x + node.w / 2, node.y + node.h / 2);
+
+      if (node.rotation !== 0) {
+        ctx.rotate((node.rotation * Math.PI) / 180);
+      }
+
+      ctx.translate(-node.w / 2, -node.h / 2);
+    }
   }
 }
