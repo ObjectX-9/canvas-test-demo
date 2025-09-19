@@ -92,6 +92,7 @@ export class SelectionStore {
 
   private notifyListeners(): void {
     const selectedIds = this.getSelectedNodeIds();
+    console.log("选择状态变化，通知监听器:", selectedIds);
     this.listeners.forEach((listener) => listener(selectedIds));
   }
 }

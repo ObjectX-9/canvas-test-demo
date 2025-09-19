@@ -14,9 +14,11 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({ className }) => {
   useEffect(() => {
     // 监听选择变化
     const handleSelectionChange = (selectedIds: string[]) => {
+      console.log("属性面板接收到选择变化:", selectedIds);
       const nodes = selectedIds
         .map((id) => elementStore.getOneElement(id))
         .filter((node): node is BaseState => Boolean(node));
+      console.log("获取到的节点:", nodes);
       setSelectedNodes(nodes);
     };
 

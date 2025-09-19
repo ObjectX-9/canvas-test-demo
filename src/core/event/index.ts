@@ -4,7 +4,6 @@ import { globalEventManager } from "./EventManager";
 export type { IEventHandler, EventContext } from "./EventManager";
 
 // 导出具体的事件处理器
-export { MouseDownHandler } from "./mouseDown";
 export { MouseMoveHandler } from "./mouseMove";
 export { MouseUpHandler } from "./mouseUp";
 export { WheelHandler } from "./wheelHandler";
@@ -12,7 +11,6 @@ export { NodeSelectionHandler } from "./nodeSelection";
 export { NodeDragHandler, NodeDragEndHandler } from "./nodeDrag";
 
 // 导出事件处理器工厂函数
-import { MouseDownHandler } from "./mouseDown";
 import { MouseMoveHandler } from "./mouseMove";
 import { MouseUpHandler } from "./mouseUp";
 import { WheelHandler } from "./wheelHandler";
@@ -28,11 +26,10 @@ const nodeSelectionHandler = new NodeSelectionHandler();
  */
 export function createBuiltinEventHandlers(): IEventHandler[] {
   return [
-    new MouseDownHandler(),
+    nodeSelectionHandler, // 节点选择处理器（包含视图拖拽逻辑）
     new MouseMoveHandler(),
     new MouseUpHandler(),
     new WheelHandler(),
-    nodeSelectionHandler,
     new NodeDragHandler(nodeSelectionHandler),
     new NodeDragEndHandler(nodeSelectionHandler),
   ];

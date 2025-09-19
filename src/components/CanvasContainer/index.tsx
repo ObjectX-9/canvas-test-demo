@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { DirectKey } from "../../core/utils/uniformScale";
 import { coordinateSystemManager, pageManager } from "../../core/manage";
-import { nodeTree } from "../../core/nodeTree";
 
 import { Page } from "../../core/nodeTree/node/page";
 import { PagePanel } from "./PagePanel";
 import { PropertyPanel } from "../PropertyPanel";
-import { mockElementData } from "../../mock/element";
 import { RenderLoop } from "../../core/render/RenderLoop";
 import { globalDataObserver } from "../../core/render/DataObserver";
 import { globalCanvasRenderEngine } from "../../core/render/canvas";
@@ -151,11 +149,9 @@ const CanvasContainer = () => {
     }
   }, []);
 
-  // 初始化页面视图状态和mock数据
+  // 初始化页面视图状态
   useEffect(() => {
-    // 旧版本的mock元素数据（保留备用）
-    nodeTree.createAllElements(mockElementData);
-    // 页面和子节点数据现在在PageManager中自动初始化
+    // 页面和子节点数据在PageManager中自动初始化
 
     const initialPage = pageManager.getCurrentPage();
     if (initialPage) {

@@ -4,6 +4,7 @@ import { nodeTree } from "../nodeTree";
 import { Rectangle } from "../nodeTree/node/rectangle";
 import { mockPageData } from "../../mock/page";
 import { getMockRectangleById } from "../../mock/element";
+import { elementStore } from "../store/ElementStore";
 
 export class PageManager {
   private pages: Map<string, Page> = new Map();
@@ -86,10 +87,13 @@ export class PageManager {
         // 添加到节点树
         nodeTree.addNode(rectangle);
 
+        // 添加到元素存储器（重要！用于节点选择）
+        elementStore.addElement(childId, rectData);
+
         // 添加为页面子节点
         page.addChild(childId);
 
-        console.log(`已为页面 ${page.name} 添加子节点: ${childId}`);
+        console.log(`已为页面 ${page.name} 添加子节点: ${childId}`, rectData);
       } else {
         console.warn(`找不到ID为 ${childId} 的矩形数据`);
       }
