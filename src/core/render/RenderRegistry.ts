@@ -1,5 +1,5 @@
 import { BaseNode } from "../nodeTree/node/baseNode";
-import { INodeRenderer, RenderContext } from "./NodeRenderer";
+import { INodeRenderer } from "./NodeRenderer";
 import { IRenderContext } from "./interfaces/IGraphicsAPI";
 
 /**
@@ -91,7 +91,7 @@ export class RenderRegistry {
    * @param context 渲染上下文
    * @returns 是否成功渲染
    */
-  renderNode(node: BaseNode, context: RenderContext | IRenderContext): boolean {
+  renderNode(node: BaseNode, context: IRenderContext): boolean {
     const renderer = this.findRenderer(node);
 
     if (!renderer) {
@@ -100,8 +100,7 @@ export class RenderRegistry {
     }
 
     try {
-      // 类型兼容处理
-      renderer.render(node, context as RenderContext);
+      renderer.render(node, context);
       return true;
     } catch (error) {
       console.error(`渲染节点 ${node.id} 时出错:`, error);
@@ -115,10 +114,7 @@ export class RenderRegistry {
    * @param context 渲染上下文
    * @returns 成功渲染的节点数量
    */
-  renderNodes(
-    nodes: BaseNode[],
-    context: RenderContext | IRenderContext
-  ): number {
+  renderNodes(nodes: BaseNode[], context: IRenderContext): number {
     let successCount = 0;
 
     for (const node of nodes) {

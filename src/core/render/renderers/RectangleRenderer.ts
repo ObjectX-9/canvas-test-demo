@@ -1,5 +1,7 @@
+import { BaseNode } from "../../nodeTree/node/baseNode";
 import { Rectangle } from "../../nodeTree/node/rectangle";
-import { BaseNodeRenderer, RenderContext } from "../NodeRenderer";
+import { BaseNodeRenderer } from "../NodeRenderer";
+import { IRenderContext } from "../interfaces/IGraphicsAPI";
 
 /**
  * 矩形节点渲染器
@@ -8,37 +10,55 @@ export class RectangleRenderer extends BaseNodeRenderer<Rectangle> {
   readonly type = "rectangle";
   priority = 10;
 
-  render(node: Rectangle, context: RenderContext): void {
-    const { ctx } = context;
+  canRender(node: BaseNode): boolean {
+    return node && node.type === "rectangle";
+  }
 
-    this.withCanvasState(context, () => {
+  getSupportedNodeTypes(): string[] {
+    return ["rectangle"];
+  }
+
+  renderNode(node: Rectangle, context: IRenderContext): boolean {
+    const { graphics } = context;
+
+    this.withGraphicsState(context, () => {
       // 应用节点变换
       this.applyNodeTransform(node, context);
 
       // 绘制矩形主体
-      ctx.fillStyle = node.fill;
-      ctx.fillRect(0, 0, node.w, node.h);
+      graphics.setFillStyle(node.fill);
+      graphics.fillRect(0, 0, node.w, node.h);
 
       // 绘制边框
-      ctx.strokeStyle = "#333";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(0, 0, node.w, node.h);
+      graphics.setStrokeStyle("#333");
+      graphics.setLineWidth(1);
+      graphics.strokeRect(0, 0, node.w, node.h);
 
       // 如果有圆角，绘制圆角矩形
       if (node.radius > 0) {
-        this.drawRoundedRect(ctx, 0, 0, node.w, node.h, node.radius, node.fill);
+        this.drawRoundedRect(
+          graphics,
+          0,
+          0,
+          node.w,
+          node.h,
+          node.radius,
+          node.fill
+        );
       }
 
-      // 绘制节点ID标识
-      this.drawNodeLabel(node, ctx);
+      // 绘制标签
+      this.drawLabel(graphics, node);
     });
+
+    return true;
   }
 
   /**
    * 绘制圆角矩形
    */
   private drawRoundedRect(
-    ctx: CanvasRenderingContext2D,
+    graphics: IRenderContext["graphics"],
     x: number,
     y: number,
     width: number,
@@ -46,37 +66,45 @@ export class RectangleRenderer extends BaseNodeRenderer<Rectangle> {
     radius: number,
     fillStyle: string
   ): void {
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + width - radius, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-    ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    ctx.lineTo(x + radius, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
-    ctx.closePath();
+    const r = Math.min(radius, width / 2, height / 2);
 
-    ctx.fillStyle = fillStyle;
-    ctx.fill();
-    ctx.stroke();
+    graphics.beginPath();
+    graphics.moveTo(x + r, y);
+    graphics.lineTo(x + width - r, y);
+    graphics.arc(x + width - r, y + r, r, -Math.PI / 2, 0);
+    graphics.lineTo(x + width, y + height - r);
+    graphics.arc(x + width - r, y + height - r, r, 0, Math.PI / 2);
+    graphics.lineTo(x + r, y + height);
+    graphics.arc(x + r, y + height - r, r, Math.PI / 2, Math.PI);
+    graphics.lineTo(x, y + r);
+    graphics.arc(x + r, y + r, r, Math.PI, -Math.PI / 2);
+    graphics.closePath();
+
+    graphics.setFillStyle(fillStyle);
+    graphics.fill();
+
+    graphics.setStrokeStyle("#333");
+    graphics.setLineWidth(1);
+    graphics.stroke();
   }
 
   /**
    * 绘制节点标签
    */
-  private drawNodeLabel(node: Rectangle, ctx: CanvasRenderingContext2D): void {
-    // 设置文字样式
-    ctx.fillStyle = "#000";
-    ctx.font = "12px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+  private drawLabel(
+    graphics: IRenderContext["graphics"],
+    node: Rectangle
+  ): void {
+    if (!node.id) return;
 
-    // 绘制节点ID
-    const centerX = node.w / 2;
-    const centerY = node.h / 2;
-    ctx.fillText(node.id, centerX, centerY);
+    // 设置文本样式
+    graphics.setFont("12px Arial");
+    graphics.setFillStyle("#000");
+    graphics.setTextAlign("center");
+    graphics.setTextBaseline("middle");
+
+    // 绘制文本
+    graphics.fillText(node.id, node.w / 2, node.h / 2);
   }
 
   /**

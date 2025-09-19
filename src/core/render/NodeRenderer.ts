@@ -1,16 +1,7 @@
 import { BaseNode } from "../nodeTree/node/baseNode";
-import { IGraphicsAPI } from "./interfaces/IGraphicsAPI";
+import { IRenderContext } from "./interfaces/IGraphicsAPI";
 
-/**
- * 渲染上下文接口
- */
-export interface RenderContext {
-  ctx: CanvasRenderingContext2D;
-  canvas: HTMLCanvasElement;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  viewMatrix?: any; // 视图变换矩阵
-  scale?: number; // 缩放比例
-}
+// RenderContext已移除，直接使用IRenderContext
 
 /**
  * 节点渲染器接口
@@ -19,117 +10,106 @@ export interface INodeRenderer<T extends BaseNode = BaseNode> {
   /**
    * 渲染器类型标识
    */
-  readonly type: string;
-
-  /**
-   * 渲染节点
-   * @param node 要渲染的节点
-   * @param context 渲染上下文
-   */
-  render(node: T, context: RenderContext): void;
+  type: string;
 
   /**
    * 检查是否可以渲染指定节点
-   * @param node 节点实例
+   * @param node 要检查的节点
    */
-  canRender(node: BaseNode): node is T;
+  canRender(node: BaseNode): boolean;
+  render(node: BaseNode, context: IRenderContext): boolean;
+  getPriority(): number;
 
   /**
-   * 获取节点的边界框（用于碰撞检测等）
-   * @param node 节点实例
+   * 获取渲染优先级
    */
-  getBounds?(node: T): { x: number; y: number; width: number; height: number };
+  priority: number;
 
   /**
-   * 渲染器优先级（数字越大优先级越高）
+   * 渲染节点的核心方法
+   * @param node 要渲染的节点
+   * @param context 渲染上下文
    */
-  priority?: number;
+  render(node: T, context: IRenderContext): void;
 }
 
 /**
- * 抽象节点渲染器基类
+ * 基础节点渲染器抽象类
  */
 export abstract class BaseNodeRenderer<T extends BaseNode = BaseNode>
   implements INodeRenderer<T>
 {
   abstract readonly type: string;
-  public priority: number = 0;
+  abstract priority: number;
 
-  /**
-   * 子类必须实现的渲染方法
-   */
-  abstract render(node: T, context: RenderContext): void;
+  abstract canRender(node: BaseNode): boolean;
+  abstract renderNode(node: BaseNode, context: IRenderContext): boolean;
+  abstract getSupportedNodeTypes(): string[];
 
-  /**
-   * 默认的类型检查实现
-   */
-  canRender(node: BaseNode): node is T {
-    return node.type === this.type;
+  render(node: BaseNode, context: IRenderContext): boolean {
+    try {
+      if (!this.canRender(node)) {
+        return false;
+      }
+      return this.renderNode(node as T, context);
+    } catch (error) {
+      console.error(`渲染器 ${this.type} 渲染节点失败:`, error);
+      return false;
+    }
+  }
+
+  getPriority(): number {
+    return this.priority;
   }
 
   /**
-   * 默认的边界框获取实现
+   * 辅助方法：在保存/恢复图形状态的情况下执行渲染
    */
-  getBounds(node: T): { x: number; y: number; width: number; height: number } {
-    return {
-      x: node.x,
-      y: node.y,
-      width: node.w,
-      height: node.h,
-    };
-  }
-
-  /**
-   * 辅助方法：保存和恢复Canvas状态
-   */
-  protected withCanvasState(
-    context: RenderContext,
+  protected withGraphicsState(
+    context: IRenderContext,
     callback: () => void
   ): void {
-    context.ctx.save();
+    const { graphics } = context;
+    graphics.save();
     try {
       callback();
     } finally {
-      context.ctx.restore();
+      graphics.restore();
+    }
+  }
+
+  /**
+   * 辅助方法：应用变换
+   */
+  protected applyTransform(context: IRenderContext, node: BaseNode): void {
+    const { graphics } = context;
+
+    // 应用位置变换
+    graphics.translate(node.x, node.y);
+
+    // 应用旋转（如果有的话）
+    if (node.rotation && node.rotation !== 0) {
+      graphics.translate(node.w / 2, node.h / 2);
+      graphics.rotate((node.rotation * Math.PI) / 180);
+      graphics.translate(-node.w / 2, -node.h / 2);
     }
   }
 
   /**
    * 辅助方法：应用节点变换
    */
-  protected applyNodeTransform(node: T, context: RenderContext): void {
-    // 兼容新旧接口
-    const graphics: IGraphicsAPI | null =
-      "graphics" in context ? (context as any).graphics : null;
-    const ctx: CanvasRenderingContext2D | null =
-      "ctx" in context ? (context as RenderContext).ctx : null;
+  protected applyNodeTransform(node: T, context: IRenderContext): void {
+    const { graphics } = context;
 
-    if (!graphics && !ctx) {
-      console.error("渲染上下文缺少图形接口");
-      return;
+    // 应用位置变换
+    graphics.translate(node.x + node.w / 2, node.y + node.h / 2);
+
+    // 应用旋转
+    if (node.rotation !== 0) {
+      graphics.rotate((node.rotation * Math.PI) / 180);
     }
 
-    // 优先使用新的图形接口
-    if (graphics) {
-      // 应用位置变换
-      graphics.translate(node.x + node.w / 2, node.y + node.h / 2);
-
-      // 应用旋转
-      if (node.rotation !== 0) {
-        graphics.rotate((node.rotation * Math.PI) / 180);
-      }
-
-      // 移回原点
-      graphics.translate(-node.w / 2, -node.h / 2);
-    } else if (ctx) {
-      // 兼容旧接口
-      ctx.translate(node.x + node.w / 2, node.y + node.h / 2);
-
-      if (node.rotation !== 0) {
-        ctx.rotate((node.rotation * Math.PI) / 180);
-      }
-
-      ctx.translate(-node.w / 2, -node.h / 2);
-    }
+    // 移回原点
+    graphics.translate(-node.w / 2, -node.h / 2);
   }
 }

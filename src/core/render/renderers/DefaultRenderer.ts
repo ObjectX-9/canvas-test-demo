@@ -1,81 +1,52 @@
 import { BaseNode } from "../../nodeTree/node/baseNode";
-import { BaseNodeRenderer, RenderContext } from "../NodeRenderer";
+import { BaseNodeRenderer } from "../NodeRenderer";
+import { IRenderContext } from "../interfaces/IGraphicsAPI";
 
 /**
  * 默认节点渲染器
- * 用于渲染没有专用渲染器的节点类型
+ * 用于渲染未知类型的节点
  */
 export class DefaultRenderer extends BaseNodeRenderer<BaseNode> {
   readonly type = "default";
-  priority = -1; // 最低优先级
+  priority = 0;
 
-  render(node: BaseNode, context: RenderContext): void {
-    const { ctx } = context;
-
-    this.withCanvasState(context, () => {
-      // 应用节点变换
-      this.applyNodeTransform(node, context);
-
-      // 绘制默认的占位符矩形
-      this.drawPlaceholder(node, ctx);
-
-      // 绘制节点信息
-      this.drawNodeInfo(node, ctx);
-    });
-  }
-
-  /**
-   * 总是返回true，作为兜底渲染器
-   */
-  canRender(_node: BaseNode): _node is BaseNode {
+  canRender(): boolean {
+    // 默认渲染器可以渲染任何节点
     return true;
   }
 
-  /**
-   * 绘制占位符
-   */
-  private drawPlaceholder(node: BaseNode, ctx: CanvasRenderingContext2D): void {
-    // 绘制虚线边框的矩形
-    ctx.setLineDash([5, 5]);
-    ctx.strokeStyle = "#999";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(0, 0, node.w, node.h);
-
-    // 绘制半透明背景
-    ctx.fillStyle = "rgba(200, 200, 200, 0.3)";
-    ctx.fillRect(0, 0, node.w, node.h);
-
-    // 绘制对角线
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(node.w, node.h);
-    ctx.moveTo(node.w, 0);
-    ctx.lineTo(0, node.h);
-    ctx.stroke();
-
-    // 重置线条样式
-    ctx.setLineDash([]);
+  getSupportedNodeTypes(): string[] {
+    return ["*"]; // 表示支持所有类型
   }
 
-  /**
-   * 绘制节点信息
-   */
-  private drawNodeInfo(node: BaseNode, ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = "#666";
-    ctx.font = "10px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+  renderNode(node: BaseNode, context: IRenderContext): boolean {
+    const { graphics } = context;
 
-    const centerX = node.w / 2;
-    const centerY = node.h / 2;
+    this.withGraphicsState(context, () => {
+      // 应用节点变换
+      this.applyTransform(context, node);
 
-    // 绘制节点类型和ID
-    ctx.fillText(`类型: ${node.type}`, centerX, centerY - 10);
-    ctx.fillText(`ID: ${node.id}`, centerX, centerY + 10);
+      // 绘制占位符矩形
+      graphics.setStrokeStyle("#ff0000");
+      graphics.setLineWidth(2);
+      graphics.strokeRect(0, 0, node.w, node.h);
 
-    // 如果空间足够，显示尺寸信息
-    if (node.w > 80 && node.h > 60) {
-      ctx.fillText(`${node.w} × ${node.h}`, centerX, centerY + 25);
-    }
+      // 绘制对角线
+      graphics.beginPath();
+      graphics.moveTo(0, 0);
+      graphics.lineTo(node.w, node.h);
+      graphics.moveTo(node.w, 0);
+      graphics.lineTo(0, node.h);
+      graphics.stroke();
+
+      // 绘制未知节点标识
+      graphics.setFillStyle("#ff0000");
+      graphics.setFont("12px Arial");
+      graphics.setTextAlign("center");
+      graphics.setTextBaseline("middle");
+      graphics.fillText(`未知类型: ${node.type}`, node.w / 2, node.h / 2);
+    });
+
+    return true;
   }
 }

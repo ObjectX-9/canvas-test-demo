@@ -14,4 +14,4 @@ export * from "./canvas";
 // 导出类型
 export type { RenderCallback } from "./RenderLoop";
 export type { DataChangeCallback } from "./DataObserver";
-export type { INodeRenderer, RenderContext } from "./NodeRenderer";
+export type { INodeRenderer } from "./NodeRenderer";
