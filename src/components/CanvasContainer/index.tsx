@@ -6,13 +6,14 @@ import {
   rulerManager,
 } from "../../core/manage";
 import { nodeTree } from "../../core/nodeTree";
-import { Rectangle } from "../../core/nodeTree/node/rectangle";
+
 import { BaseNode } from "../../core/nodeTree/node/baseNode";
 import { Page } from "../../core/nodeTree/node/page";
 import { PagePanel } from "./PagePanel";
 import { mockElementData, initializeMockData } from "../../mock/element";
 import { RenderLoop } from "../../core/render/RenderLoop";
 import { globalDataObserver } from "../../core/render/DataObserver";
+import { globalRenderEngine } from "../../core/render";
 
 let canvas2DContext: CanvasRenderingContext2D;
 let renderLoop: RenderLoop;
@@ -160,110 +161,18 @@ const CanvasContainer = () => {
     isDragging.current = false;
   };
 
-  // 直接绘制矩形的函数
-  const drawRectangle = (ctx: CanvasRenderingContext2D, node: Rectangle) => {
-    if (!node) return;
-
-    const { x, y, w, h, fill, id } = node;
-
-    // 绘制矩形
-    ctx.fillStyle = fill;
-    ctx.fillRect(x, y, w, h);
-
-    // 绘制边框
-    ctx.strokeStyle = "#333";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x, y, w, h);
-
-    // 绘制ID文本
-    ctx.fillStyle = "#000";
-    ctx.font = "16px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(id, x + w / 2, y + h / 2);
-  };
-
   // 渲染场景的回调函数
   const drawScene = useCallback(
     (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
-      // 清空画布
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // 绘制页面背景色
       if (currentPage) {
-        ctx.fillStyle = currentPage.backgroundColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-
-      // 绘制标尺（在坐标变换之前）
-      rulerManager.render(ctx, canvas);
-
-      // 保存当前状态并应用缩放和平移
-      ctx.save();
-
-      // 使用坐标系统管理器获取视图变换矩阵
-      const viewMatrix = coordinateSystemManager.getViewTransformMatrix();
-      ctx.setTransform(
-        viewMatrix[0], // a (缩放 x)
-        viewMatrix[1], // b (倾斜 y)
-        viewMatrix[3], // c (倾斜 x)
-        viewMatrix[4], // d (缩放 y)
-        viewMatrix[6], // e (平移 x 轴)
-        viewMatrix[7] // f (平移 y 轴)
-      );
-
-      // 绘制网格
-      const currentView = coordinateSystemManager.getViewState();
-      const step = 25; // 网格间隔
-      ctx.strokeStyle = "#ddd";
-      ctx.lineWidth = 1 / currentView.scale;
-
-      // 获取当前视口范围
-      const viewportWidth = canvas.width / currentView.scale;
-      const viewportHeight = canvas.height / currentView.scale;
-
-      const startX =
-        Math.floor(-currentView.pageX / currentView.scale / step) * step;
-      const startY =
-        Math.floor(-currentView.pageY / currentView.scale / step) * step;
-      const endX = startX + viewportWidth + step;
-      const endY = startY + viewportHeight + step;
-
-      // 绘制水平和垂直线
-      for (let x = startX; x <= endX; x += step) {
-        ctx.beginPath();
-        ctx.moveTo(x, startY);
-        ctx.lineTo(x, endY);
-        ctx.stroke();
-      }
-
-      for (let y = startY; y <= endY; y += step) {
-        ctx.beginPath();
-        ctx.moveTo(startX, y);
-        ctx.lineTo(endX, y);
-        ctx.stroke();
-      }
-
-      // 渲染页面子节点（在坐标变换内）
-      if (currentPage) {
-        const pageChildren = currentPage.children;
-        pageChildren.forEach((nodeId) => {
-          const nodeState = nodeTree.getNodeById(nodeId);
-          if (nodeState) {
-            switch (nodeState.type) {
-              case "rectangle": {
-                drawRectangle(ctx, nodeState as Rectangle);
-                break;
-              }
-            }
-          }
+        globalRenderEngine.renderPage(currentPage, ctx, canvas, {
+          renderRulers: true,
+          renderGrid: true,
+          rulerRenderer: (ctx, canvas) => rulerManager.render(ctx, canvas),
         });
       }
-
-      // 恢复坐标变换
-      ctx.restore();
     },
-    [currentPage, drawRectangle]
+    [currentPage]
   );
 
   useEffect(() => {
