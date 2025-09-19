@@ -33,28 +33,22 @@ export class NodeSelectionHandler implements IEventHandler {
 
     // 获取页面中的所有节点
     const nodeIds = currentPage.children || [];
-    console.log("页面子节点IDs:", nodeIds);
     const nodes = nodeIds
       .map((id) => nodeTree.getNodeById(id))
       .filter((node): node is NonNullable<typeof node> => Boolean(node));
-    console.log("从nodeTree获取到的节点:", nodes);
-    console.log("鼠标点击的世界坐标:", worldPoint);
 
     // 查找被点击的节点
     const clickedNode = HitTestUtils.findNodeAtPoint(worldPoint, nodes);
 
     if (clickedNode) {
       // 点击了节点
-      console.log("节点被点击:", clickedNode.id, clickedNode.type);
       const isMultiSelect = mouseEvent.ctrlKey || mouseEvent.metaKey;
 
       if (isMultiSelect) {
         // 多选模式：切换选择状态
-        console.log("多选模式：切换节点", clickedNode.id);
         selectionStore.toggleNode(clickedNode.id);
       } else {
         // 单选模式：选中该节点
-        console.log("单选模式：选中节点", clickedNode.id);
         selectionStore.selectNode(clickedNode.id);
       }
 
@@ -70,10 +64,8 @@ export class NodeSelectionHandler implements IEventHandler {
       context.isDragging.current = false;
     } else {
       // 点击了空白区域
-      console.log("点击了空白区域");
       if (!(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
         // 非多选模式下清除选择
-        console.log("清除所有选择");
         selectionStore.clearSelection();
       }
 

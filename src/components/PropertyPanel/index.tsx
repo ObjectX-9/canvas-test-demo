@@ -16,9 +16,17 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({ className }) => {
     const handleSelectionChange = (selectedIds: string[]) => {
       console.log("属性面板接收到选择变化:", selectedIds);
       const nodes = selectedIds
-        .map((id) => nodeTree.getNodeById(id))
+        .map((id) => {
+          const nodeInstance = nodeTree.getNodeById(id);
+          console.log(`获取节点 ${id}:`, nodeInstance);
+          // 从节点实例中提取 _state 数据
+          if (nodeInstance && "_state" in nodeInstance) {
+            return (nodeInstance as any)._state as BaseState;
+          }
+          return nodeInstance;
+        })
         .filter((node): node is BaseState => Boolean(node));
-      console.log("获取到的节点:", nodes);
+      console.log("转换后的节点数据:", nodes);
       setSelectedNodes(nodes);
     };
 
@@ -103,10 +111,11 @@ const SingleNodeProperties: React.FC<SingleNodePropertiesProps> = ({
     setLocalNode(updatedNode);
 
     // 更新实际的节点数据
-    const originalNode = nodeTree.getNodeById(node.id);
-    if (originalNode) {
-      // 类型安全的属性更新
-      Object.assign(originalNode, { [property]: value });
+    const nodeInstance = nodeTree.getNodeById(node.id);
+    if (nodeInstance && "_state" in nodeInstance) {
+      // 更新节点实例的 _state
+      const nodeState = (nodeInstance as any)._state;
+      Object.assign(nodeState, { [property]: value });
     }
   };
 
@@ -221,10 +230,11 @@ const MultiNodeProperties: React.FC<MultiNodePropertiesProps> = ({ nodes }) => {
     value: string | number
   ) => {
     nodes.forEach((node) => {
-      const originalNode = nodeTree.getNodeById(node.id);
-      if (originalNode) {
-        // 类型安全的属性更新
-        Object.assign(originalNode, { [property]: value });
+      const nodeInstance = nodeTree.getNodeById(node.id);
+      if (nodeInstance && "_state" in nodeInstance) {
+        // 更新节点实例的 _state
+        const nodeState = (nodeInstance as any)._state;
+        Object.assign(nodeState, { [property]: value });
       }
     });
   };
@@ -257,9 +267,10 @@ const MultiNodeProperties: React.FC<MultiNodePropertiesProps> = ({ nodes }) => {
             onChange={(e) => {
               const offset = parseFloat(e.target.value) || 0;
               nodes.forEach((node) => {
-                const originalNode = nodeTree.getNodeById(node.id);
-                if (originalNode) {
-                  originalNode.x = originalNode.x + offset;
+                const nodeInstance = nodeTree.getNodeById(node.id);
+                if (nodeInstance && "_state" in nodeInstance) {
+                  const nodeState = (nodeInstance as any)._state;
+                  nodeState.x = nodeState.x + offset;
                 }
               });
             }}
@@ -273,9 +284,10 @@ const MultiNodeProperties: React.FC<MultiNodePropertiesProps> = ({ nodes }) => {
             onChange={(e) => {
               const offset = parseFloat(e.target.value) || 0;
               nodes.forEach((node) => {
-                const originalNode = nodeTree.getNodeById(node.id);
-                if (originalNode) {
-                  originalNode.y = originalNode.y + offset;
+                const nodeInstance = nodeTree.getNodeById(node.id);
+                if (nodeInstance && "_state" in nodeInstance) {
+                  const nodeState = (nodeInstance as any)._state;
+                  nodeState.y = nodeState.y + offset;
                 }
               });
             }}
