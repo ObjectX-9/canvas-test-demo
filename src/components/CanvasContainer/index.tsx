@@ -9,7 +9,7 @@ import { nodeTree } from "../../core/nodeTree";
 
 import { Page } from "../../core/nodeTree/node/page";
 import { PagePanel } from "./PagePanel";
-import { mockElementData, initializeMockData } from "../../mock/element";
+import { mockElementData } from "../../mock/element";
 import { RenderLoop } from "../../core/render/RenderLoop";
 import { globalDataObserver } from "../../core/render/DataObserver";
 import { globalRenderEngine } from "../../core/render";
@@ -155,9 +155,9 @@ const CanvasContainer = () => {
 
   // 初始化页面视图状态和mock数据
   useEffect(() => {
-    // 初始化mock元素数据
+    // 旧版本的mock元素数据（保留备用）
     nodeTree.createAllElements(mockElementData);
-    initializeMockData();
+    // 页面和子节点数据现在在PageManager中自动初始化
 
     const initialPage = pageManager.getCurrentPage();
     if (initialPage) {

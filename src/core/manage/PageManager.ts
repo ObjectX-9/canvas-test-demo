@@ -1,14 +1,17 @@
 import { PageState } from "../types/nodes/page";
 import { Page } from "../nodeTree/node/page";
 import { nodeTree } from "../nodeTree";
+import { Rectangle } from "../nodeTree/node/rectangle";
+import { mockPageData } from "../../mock/page";
+import { getMockRectangleById } from "../../mock/element";
 
 export class PageManager {
   private pages: Map<string, Page> = new Map();
   private currentPageId: string | null = null;
 
   constructor() {
-    // 初始化时创建默认页面
-    this.createDefaultPage();
+    // 使用模拟数据初始化页面
+    this.initializeMockPages();
   }
 
   // 创建新页面
@@ -47,11 +50,49 @@ export class PageManager {
     return page;
   }
 
-  // 创建默认页面
-  private createDefaultPage(): Page {
-    return this.createPage({
-      name: "页面 1",
-      isActive: true,
+  // 使用模拟数据初始化页面
+  private initializeMockPages(): void {
+    // 创建所有模拟页面
+    let activePageId: string | null = null;
+
+    mockPageData.forEach((pageData) => {
+      const page = this.createPage(pageData);
+
+      // 为页面创建子节点
+      this.createPageChildren(page, pageData.children);
+
+      // 记录活跃页面ID
+      if (pageData.isActive) {
+        activePageId = page.id;
+      }
+    });
+
+    // 如果有活跃页面，切换到它
+    if (activePageId) {
+      this.switchToPage(activePageId);
+    }
+  }
+
+  // 为页面创建子节点
+  private createPageChildren(page: Page, childrenIds: string[]): void {
+    childrenIds.forEach((childId) => {
+      // 根据ID获取矩形数据
+      const rectData = getMockRectangleById(childId);
+
+      if (rectData) {
+        // 创建矩形节点
+        const rectangle = new Rectangle(rectData);
+
+        // 添加到节点树
+        nodeTree.addNode(rectangle);
+
+        // 添加为页面子节点
+        page.addChild(childId);
+
+        console.log(`已为页面 ${page.name} 添加子节点: ${childId}`);
+      } else {
+        console.warn(`找不到ID为 ${childId} 的矩形数据`);
+      }
     });
   }
 
