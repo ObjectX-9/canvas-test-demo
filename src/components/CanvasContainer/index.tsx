@@ -22,9 +22,7 @@ export const getCanvas2D = () => {
   return canvas2DContext;
 };
 
-export const getRenderManager = () => {
-  return null; // 不再使用RenderManager
-};
+// getRenderManager已移除 - 使用新的Canvas渲染架构
 
 const CanvasContainer = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);

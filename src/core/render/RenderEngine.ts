@@ -172,12 +172,9 @@ export class RenderEngine {
 
   /**
    * 根据节点状态创建节点实例
-   * TODO: 这里需要根据你的节点工厂实现
    */
   private createNodeFromState(nodeState: unknown): BaseNode | null {
-    // 临时实现，你可能需要根据实际的节点工厂来调整
     try {
-      // 假设nodeState就是节点实例
       return nodeState as BaseNode;
     } catch (error) {
       console.error("创建节点实例失败:", error);
