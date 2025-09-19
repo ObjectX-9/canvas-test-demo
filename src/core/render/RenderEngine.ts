@@ -93,10 +93,7 @@ export class RenderEngine {
       graphics.fillRect(0, 0, canvasSize.width, canvasSize.height);
     }
 
-    // 3. 绘制标尺（在坐标变换之前）
-    if (renderRulers && this.rulerRenderer) {
-      this.rulerRenderer.renderRulers(graphics, canvasSize, viewState);
-    }
+    // 3. 标尺将在最后渲染
 
     // 4. 保存状态并应用坐标变换
     graphics.save();
@@ -138,6 +135,11 @@ export class RenderEngine {
 
     // 8. 恢复坐标变换
     graphics.restore();
+
+    // 9. 绘制标尺（在最顶层，不受坐标变换影响）
+    if (renderRulers && this.rulerRenderer) {
+      this.rulerRenderer.renderRulers(graphics, canvasSize, viewState);
+    }
   }
 
   /**
