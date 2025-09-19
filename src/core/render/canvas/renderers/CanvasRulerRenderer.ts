@@ -13,7 +13,7 @@ export class CanvasRulerRenderer implements IRulerRenderer {
 
   constructor(
     rulerSize: number = 20,
-    rulerColor: string = "#f0f0f0",
+    rulerColor: string = "#ffffff",
     textColor: string = "#000",
     fontSize: number = 10
   ) {
@@ -190,7 +190,7 @@ export class CanvasRulerRenderer implements IRulerRenderer {
   setTheme(theme: "light" | "dark"): void {
     switch (theme) {
       case "light":
-        this.rulerColor = "#f0f0f0";
+        this.rulerColor = "#ffffff";
         this.textColor = "#000";
         break;
       case "dark":
