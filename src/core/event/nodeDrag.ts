@@ -1,5 +1,5 @@
 import { IEventHandler, EventContext } from "./EventManager";
-import { elementStore } from "../store/ElementStore";
+import { nodeTree } from "../nodeTree";
 import { NodeSelectionHandler } from "./nodeSelection";
 
 /**
@@ -43,7 +43,7 @@ export class NodeDragHandler implements IEventHandler {
     const newY = worldPoint.y - dragOffset.y;
 
     // 更新节点位置
-    const node = elementStore.getOneElement(draggingNodeId);
+    const node = nodeTree.getNodeById(draggingNodeId);
     if (node) {
       node.x = newX;
       node.y = newY;

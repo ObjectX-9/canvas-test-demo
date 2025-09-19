@@ -1,6 +1,6 @@
 import { IEventHandler, EventContext } from "./EventManager";
 import { HitTestUtils } from "../utils/hitTest";
-import { elementStore } from "../store/ElementStore";
+import { nodeTree } from "../nodeTree";
 
 /**
  * 节点选择事件处理器
@@ -33,9 +33,12 @@ export class NodeSelectionHandler implements IEventHandler {
 
     // 获取页面中的所有节点
     const nodeIds = currentPage.children || [];
+    console.log("页面子节点IDs:", nodeIds);
     const nodes = nodeIds
-      .map((id) => elementStore.getOneElement(id))
+      .map((id) => nodeTree.getNodeById(id))
       .filter((node): node is NonNullable<typeof node> => Boolean(node));
+    console.log("从nodeTree获取到的节点:", nodes);
+    console.log("鼠标点击的世界坐标:", worldPoint);
 
     // 查找被点击的节点
     const clickedNode = HitTestUtils.findNodeAtPoint(worldPoint, nodes);

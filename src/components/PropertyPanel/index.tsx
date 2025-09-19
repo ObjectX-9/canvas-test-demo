@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { selectionStore } from "../../core/store/SelectionStore";
-import { elementStore } from "../../core/store/ElementStore";
+import { nodeTree } from "../../core/nodeTree";
 import { BaseState } from "../../core/types/nodes/baseState";
 import styles from "./index.module.less";
 
@@ -16,7 +16,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({ className }) => {
     const handleSelectionChange = (selectedIds: string[]) => {
       console.log("属性面板接收到选择变化:", selectedIds);
       const nodes = selectedIds
-        .map((id) => elementStore.getOneElement(id))
+        .map((id) => nodeTree.getNodeById(id))
         .filter((node): node is BaseState => Boolean(node));
       console.log("获取到的节点:", nodes);
       setSelectedNodes(nodes);
@@ -103,7 +103,7 @@ const SingleNodeProperties: React.FC<SingleNodePropertiesProps> = ({
     setLocalNode(updatedNode);
 
     // 更新实际的节点数据
-    const originalNode = elementStore.getOneElement(node.id);
+    const originalNode = nodeTree.getNodeById(node.id);
     if (originalNode) {
       // 类型安全的属性更新
       Object.assign(originalNode, { [property]: value });
@@ -221,7 +221,7 @@ const MultiNodeProperties: React.FC<MultiNodePropertiesProps> = ({ nodes }) => {
     value: string | number
   ) => {
     nodes.forEach((node) => {
-      const originalNode = elementStore.getOneElement(node.id);
+      const originalNode = nodeTree.getNodeById(node.id);
       if (originalNode) {
         // 类型安全的属性更新
         Object.assign(originalNode, { [property]: value });
@@ -257,9 +257,9 @@ const MultiNodeProperties: React.FC<MultiNodePropertiesProps> = ({ nodes }) => {
             onChange={(e) => {
               const offset = parseFloat(e.target.value) || 0;
               nodes.forEach((node) => {
-                const originalNode = elementStore.getOneElement(node.id);
+                const originalNode = nodeTree.getNodeById(node.id);
                 if (originalNode) {
-                  originalNode.x += offset;
+                  originalNode.x = originalNode.x + offset;
                 }
               });
             }}
@@ -273,9 +273,9 @@ const MultiNodeProperties: React.FC<MultiNodePropertiesProps> = ({ nodes }) => {
             onChange={(e) => {
               const offset = parseFloat(e.target.value) || 0;
               nodes.forEach((node) => {
-                const originalNode = elementStore.getOneElement(node.id);
+                const originalNode = nodeTree.getNodeById(node.id);
                 if (originalNode) {
-                  originalNode.y += offset;
+                  originalNode.y = originalNode.y + offset;
                 }
               });
             }}

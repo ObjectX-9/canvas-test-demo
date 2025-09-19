@@ -76,9 +76,11 @@ export class PageManager {
 
   // 为页面创建子节点
   private createPageChildren(page: Page, childrenIds: string[]): void {
+    console.log("createPageChildren 被调用:", page.name, childrenIds);
     childrenIds.forEach((childId) => {
       // 根据ID获取矩形数据
       const rectData = getMockRectangleById(childId);
+      console.log(`尝试获取节点 ${childId} 的数据:`, rectData);
 
       if (rectData) {
         // 创建矩形节点
@@ -88,6 +90,7 @@ export class PageManager {
         nodeTree.addNode(rectangle);
 
         // 添加到元素存储器（重要！用于节点选择）
+        console.log("即将调用 elementStore.addElement:", childId, rectData);
         elementStore.addElement(childId, rectData);
 
         // 添加为页面子节点
