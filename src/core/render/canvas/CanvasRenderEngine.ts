@@ -2,8 +2,11 @@ import { RenderEngine } from "../RenderEngine";
 import { Page } from "../../nodeTree/node/page";
 import { BaseNode } from "../../nodeTree/node/baseNode";
 import { Canvas2DGraphics } from "./Canvas2DGraphics";
-import { CanvasGridRenderer } from "./renderers/CanvasGridRenderer";
-import { CanvasBackgroundRenderer } from "./renderers/CanvasBackgroundRenderer";
+import {
+  CanvasGridRenderer,
+  CanvasBackgroundRenderer,
+  CanvasRulerRenderer,
+} from "./renderers";
 
 /**
  * Canvas 2D 专用渲染引擎
@@ -40,6 +43,7 @@ export class CanvasRenderEngine extends RenderEngine {
     // 设置Canvas专用渲染器
     this.setGridRenderer(new CanvasGridRenderer());
     this.setBackgroundRenderer(new CanvasBackgroundRenderer());
+    this.setRulerRenderer(new CanvasRulerRenderer());
 
     this.canvasInitialized = true;
     console.log("✅ Canvas渲染引擎已初始化", {
