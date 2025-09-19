@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { DirectKey } from "../../core/utils/uniformScale";
-import {
-  coordinateSystemManager,
-  pageManager,
-  rulerManager,
-} from "../../core/manage";
+import { coordinateSystemManager, pageManager } from "../../core/manage";
 import { nodeTree } from "../../core/nodeTree";
 
 import { Page } from "../../core/nodeTree/node/page";
@@ -287,7 +283,7 @@ const CanvasContainer = () => {
             id="toggleRuler"
             defaultChecked={true}
             onChange={(e) => {
-              rulerManager.toggle(e.target.checked);
+              globalCanvasRenderEngine.toggleRuler(e.target.checked);
               globalDataObserver.markChanged();
             }}
           />
@@ -298,7 +294,9 @@ const CanvasContainer = () => {
             id="rulerTheme"
             defaultValue="light"
             onChange={(e) => {
-              rulerManager.setTheme(e.target.value as "light" | "dark");
+              globalCanvasRenderEngine.setRulerTheme(
+                e.target.value as "light" | "dark"
+              );
               globalDataObserver.markChanged();
             }}
           >

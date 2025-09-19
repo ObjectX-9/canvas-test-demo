@@ -172,4 +172,22 @@ export class CanvasRenderEngine extends RenderEngine {
 
     console.log("Canvas渲染引擎已销毁");
   }
+
+  /**
+   * 切换标尺显示
+   */
+  toggleRuler(visible: boolean): void {
+    if (this.rulerRenderer && "toggle" in this.rulerRenderer) {
+      (this.rulerRenderer as CanvasRulerRenderer).toggle(visible);
+    }
+  }
+
+  /**
+   * 设置标尺主题
+   */
+  setRulerTheme(theme: "light" | "dark"): void {
+    if (this.rulerRenderer && "setTheme" in this.rulerRenderer) {
+      (this.rulerRenderer as CanvasRulerRenderer).setTheme(theme);
+    }
+  }
 }

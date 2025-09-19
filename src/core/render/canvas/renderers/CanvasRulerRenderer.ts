@@ -9,11 +9,12 @@ export class CanvasRulerRenderer implements IRulerRenderer {
   private rulerColor: string;
   private textColor: string;
   private fontSize: number;
+  private visible: boolean = true;
 
   constructor(
     rulerSize: number = 20,
     rulerColor: string = "#f0f0f0",
-    textColor: string = "#666",
+    textColor: string = "#000",
     fontSize: number = 10
   ) {
     this.rulerSize = rulerSize;
@@ -27,6 +28,8 @@ export class CanvasRulerRenderer implements IRulerRenderer {
     canvasSize: { width: number; height: number },
     viewState: { pageX: number; pageY: number; scale: number }
   ): void {
+    if (!this.visible) return;
+
     this.renderHorizontalRuler(graphics, canvasSize, viewState);
     this.renderVerticalRuler(graphics, canvasSize, viewState);
   }
@@ -172,5 +175,35 @@ export class CanvasRulerRenderer implements IRulerRenderer {
    */
   getRulerSize(): number {
     return this.rulerSize;
+  }
+
+  /**
+   * 切换标尺显示
+   */
+  toggle(visible: boolean): void {
+    this.visible = visible;
+  }
+
+  /**
+   * 设置标尺主题
+   */
+  setTheme(theme: "light" | "dark"): void {
+    switch (theme) {
+      case "light":
+        this.rulerColor = "#f0f0f0";
+        this.textColor = "#000";
+        break;
+      case "dark":
+        this.rulerColor = "#2a2a2a";
+        this.textColor = "#fff";
+        break;
+    }
+  }
+
+  /**
+   * 获取标尺是否可见
+   */
+  isVisible(): boolean {
+    return this.visible;
   }
 }
