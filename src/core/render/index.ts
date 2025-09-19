@@ -78,3 +78,9 @@ export class CanvasRenderer implements RenderEngine {
     }
   }
 }
+
+// 导出渲染循环和数据观察者
+export { RenderLoop } from "./RenderLoop";
+export { DataObserver, globalDataObserver } from "./DataObserver";
+export type { RenderCallback } from "./RenderLoop";
+export type { DataChangeCallback } from "./DataObserver";

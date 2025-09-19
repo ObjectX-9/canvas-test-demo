@@ -1,1 +1,1 @@
-export const handleMouseDown = (event: MouseEvent) => {};
+export const handleMouseDown = (_event: MouseEvent) => {};

@@ -1,9 +1,10 @@
-import { getRenderManager } from "../../components/CanvasContainer";
 import { ElementCollections } from "../types";
 import { BaseState } from "../types/nodes/baseState";
 import { RectangleState } from "../types/nodes/rectangle";
+import { PageState } from "../types/nodes/page";
 import { BaseNode } from "./node/baseNode";
 import { Rectangle } from "./node/rectangle";
+import { Page } from "./node/page";
 
 export class NodeTree {
   private nodes: Map<string, BaseState> = new Map();
@@ -34,6 +35,12 @@ export class NodeTree {
         case "rectangle": {
           const rect = new Rectangle(elemState as RectangleState);
           this.addNode(rect);
+          break;
+        }
+        case "page": {
+          const page = new Page(elemState as PageState);
+          this.addNode(page);
+          break;
         }
       }
     });

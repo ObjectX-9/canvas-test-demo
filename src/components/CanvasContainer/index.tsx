@@ -1,61 +1,94 @@
-import { useEffect, useRef, useState } from "react";
-import { viewStore } from "../../core/store/ViewStore";
-import { drawRect } from "../../core/render/drawRect";
-import { DirectKey, uniformScale } from "../../core/utils/uniformScale";
-import avatar from "../../assets/avatar.png";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { DirectKey } from "../../core/utils/uniformScale";
+import { coordinateSystemManager, pageManager } from "../../core/manage";
 import { nodeTree } from "../../core/nodeTree";
-import { RectangleState } from "../../core/types/nodes/rectangle";
-import { RenderManager } from "../../core/render/renderManager";
-import { CanvasRenderer } from "../../core/render";
 import { Rectangle } from "../../core/nodeTree/node/rectangle";
 import { BaseNode } from "../../core/nodeTree/node/baseNode";
+import { Page } from "../../core/nodeTree/node/page";
+import { PagePanel } from "./PagePanel";
+import { mockElementData, initializeMockData } from "../../mock/element";
+import { RenderLoop } from "../../core/render/RenderLoop";
+import { globalDataObserver } from "../../core/render/DataObserver";
 
 let canvas2DContext: CanvasRenderingContext2D;
-let render: RenderManager;
+let renderLoop: RenderLoop;
 
 export const getCanvas2D = () => {
   return canvas2DContext;
 };
 
 export const getRenderManager = () => {
-  return render;
+  return null; // 不再使用RenderManager
 };
 
 let hoveredNode: BaseNode | undefined;
 
 const CanvasContainer = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [scale, setScale] = useState(1); // 缩放比例
-  const [offset, setOffset] = useState({
-    x: viewStore.getView().pageX,
-    y: viewStore.getView().pageY,
-  }); // 画布平移偏移量
-  const [zoomIndicator, setZoomIndicator] = useState("100%"); // 缩放标识
+  const [viewState, setViewState] = useState(
+    coordinateSystemManager.getViewState()
+  );
+  const [zoomIndicator, setZoomIndicator] = useState(
+    `${Math.round(viewState.scale * 100)}%`
+  ); // 缩放标识
   const [ratio, setRatio] = useState(1); // 比例尺
   const [scaleCenter, setScaleCenter] = useState<DirectKey>("CC"); // 缩放中心
+  const [currentPage, setCurrentPage] = useState<Page | null>(
+    pageManager.getCurrentPage()
+  );
+  const [showPagePanel, setShowPagePanel] = useState(false);
+  const [fps, setFps] = useState(0); // FPS显示
   const isDragging = useRef(false);
   const lastMousePosition = useRef({ x: 0, y: 0 });
+
+  // 处理页面切换
+  const handlePageSwitch = (page: Page) => {
+    setCurrentPage(page);
+
+    // 同步页面的视图状态到坐标系统管理器
+    coordinateSystemManager.setViewState({
+      pageX: page.panX,
+      pageY: page.panY,
+      scale: page.zoom,
+    });
+    setViewState(coordinateSystemManager.getViewState());
+    setZoomIndicator(`${Math.round(page.zoom * 100)}%`);
+
+    // 通知数据变更
+    globalDataObserver.markChanged();
+  };
+
   // 处理缩放
   const handleWheel = (event: WheelEvent) => {
     event.preventDefault();
 
+    const currentView = coordinateSystemManager.getViewState();
     const zoomFactor = 0.01; // 缩放速率调整为0.01
     const scaleChange = event.deltaY > 0 ? 1 - zoomFactor : 1 + zoomFactor;
-    const newScale = Math.min(Math.max(0.1, scale * scaleChange), 5); // 确保缩放比例不会小于0.1
+    const newScale = Math.min(
+      Math.max(0.1, currentView.scale * scaleChange),
+      5
+    ); // 确保缩放比例不会小于0.1
 
     const mouseX = event.clientX;
     const mouseY = event.clientY;
 
-    const sceneX = (mouseX - offset.x) / scale;
-    const sceneY = (mouseY - offset.y) / scale;
+    // 使用坐标系统管理器进行以鼠标位置为中心的缩放
+    coordinateSystemManager.updateViewScale(newScale, mouseX, mouseY);
 
-    setScale(newScale);
-    setOffset({
-      x: mouseX - sceneX * newScale,
-      y: mouseY - sceneY * newScale,
-    });
-
+    const updatedView = coordinateSystemManager.getViewState();
+    setViewState(updatedView);
     setZoomIndicator(`${Math.round(newScale * 100)}%`);
+
+    // 同步视图状态到当前页面
+    if (currentPage) {
+      currentPage.zoom = newScale;
+      currentPage.panX = updatedView.pageX;
+      currentPage.panY = updatedView.pageY;
+    }
+
+    // 通知数据变更
+    globalDataObserver.markChanged();
   };
 
   const handleMouseDownCanvas = (event: MouseEvent) => {
@@ -68,18 +101,31 @@ const CanvasContainer = () => {
       const deltaX = event.clientX - lastMousePosition.current.x;
       const deltaY = event.clientY - lastMousePosition.current.y;
 
-      setOffset((prevOffset) => ({
-        x: prevOffset.x + deltaX,
-        y: prevOffset.y + deltaY,
-      }));
+      // 使用坐标系统管理器更新视图位置
+      coordinateSystemManager.updateViewPosition(deltaX, deltaY);
+      const updatedView = coordinateSystemManager.getViewState();
+      setViewState(updatedView);
+
+      // 同步视图状态到当前页面
+      if (currentPage) {
+        currentPage.panX = updatedView.pageX;
+        currentPage.panY = updatedView.pageY;
+      }
+
+      // 通知数据变更
+      globalDataObserver.markChanged();
 
       lastMousePosition.current = { x: event.clientX, y: event.clientY };
     }
 
     const allNodes = nodeTree.getAllNodes();
-    // 屏幕坐标转画布坐标
-    const canvasX = (event.clientX - offset.x) / scale;
-    const canvasY = (event.clientY - offset.y) / scale;
+    // 使用坐标系统管理器进行屏幕坐标转世界坐标
+    const worldPoint = coordinateSystemManager.screenToWorld(
+      event.clientX,
+      event.clientY
+    );
+    const canvasX = worldPoint.x;
+    const canvasY = worldPoint.y;
 
     // 判断鼠标是否在节点上
     const isPointerInsideNode = (node: BaseNode, x: number, y: number) => {
@@ -110,82 +156,121 @@ const CanvasContainer = () => {
     isDragging.current = false;
   };
 
-  const drawScene = (
-    ctx: CanvasRenderingContext2D,
-    canvas: HTMLCanvasElement
-  ) => {
-    // 清空画布
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // 保存当前状态并应用缩放和平移
-    ctx.save();
+  // 直接绘制矩形的函数
+  const drawRectangle = (ctx: CanvasRenderingContext2D, node: Rectangle) => {
+    if (!node) return;
 
-    ctx.setTransform(
-      scale, // a
-      0, // b
-      0, // c
-      scale, // d
-      offset.x, // e (平移 x 轴)
-      offset.y // f (平移 y 轴)
-    );
+    const { x, y, w, h, fill, id } = node;
 
-    // 绘制网格
-    const step = 25; // 网格间隔
-    ctx.strokeStyle = "#ddd";
-    ctx.lineWidth = 1 / scale;
+    // 绘制矩形
+    ctx.fillStyle = fill;
+    ctx.fillRect(x, y, w, h);
 
-    // 获取当前视口范围
-    const viewportWidth = canvas.width / scale;
-    const viewportHeight = canvas.height / scale;
+    // 绘制边框
+    ctx.strokeStyle = "#333";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, w, h);
 
-    const startX = Math.floor(-offset.x / scale / step) * step;
-    const startY = Math.floor(-offset.y / scale / step) * step;
-    const endX = startX + viewportWidth + step;
-    const endY = startY + viewportHeight + step;
-
-    // 绘制水平和垂直线
-    for (let x = startX; x <= endX; x += step) {
-      ctx.beginPath();
-      ctx.moveTo(x, startY);
-      ctx.lineTo(x, endY);
-      ctx.stroke();
-    }
-
-    for (let y = startY; y <= endY; y += step) {
-      ctx.beginPath();
-      ctx.moveTo(startX, y);
-      ctx.lineTo(endX, y);
-      ctx.stroke();
-    }
-
-    // 等比缩放计算
-    // const uniformScaleMat = uniformScale({ ratio, scaleCenter });
-
-    // const nodes = nodeTree.getAllNodes();
-    // // 遍历 map 获取每个 value
-    // for (const [key, value] of nodes) {
-    //   switch (value.type) {
-    //     case "rectangle": {
-    //       drawRect(ctx, {
-    //         transform: uniformScaleMat,
-    //         state: value as RectangleState,
-    //       });
-    //     }
-    //   }
-    // }
-
-    ctx.restore(); // 恢复初始状态以确保其他元素不受影响
-
-    // 绘制标尺
-    drawRulers(ctx, canvas);
+    // 绘制ID文本
+    ctx.fillStyle = "#000";
+    ctx.font = "16px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(id, x + w / 2, y + h / 2);
   };
+
+  // 渲染场景的回调函数
+  const drawScene = useCallback(
+    (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+      // 清空画布
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 绘制页面背景色
+      if (currentPage) {
+        ctx.fillStyle = currentPage.backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // 绘制标尺（在坐标变换之前）
+      drawRulers(ctx, canvas);
+
+      // 保存当前状态并应用缩放和平移
+      ctx.save();
+
+      // 使用坐标系统管理器获取视图变换矩阵
+      const viewMatrix = coordinateSystemManager.getViewTransformMatrix();
+      ctx.setTransform(
+        viewMatrix[0], // a (缩放 x)
+        viewMatrix[1], // b (倾斜 y)
+        viewMatrix[3], // c (倾斜 x)
+        viewMatrix[4], // d (缩放 y)
+        viewMatrix[6], // e (平移 x 轴)
+        viewMatrix[7] // f (平移 y 轴)
+      );
+
+      // 绘制网格
+      const currentView = coordinateSystemManager.getViewState();
+      const step = 25; // 网格间隔
+      ctx.strokeStyle = "#ddd";
+      ctx.lineWidth = 1 / currentView.scale;
+
+      // 获取当前视口范围
+      const viewportWidth = canvas.width / currentView.scale;
+      const viewportHeight = canvas.height / currentView.scale;
+
+      const startX =
+        Math.floor(-currentView.pageX / currentView.scale / step) * step;
+      const startY =
+        Math.floor(-currentView.pageY / currentView.scale / step) * step;
+      const endX = startX + viewportWidth + step;
+      const endY = startY + viewportHeight + step;
+
+      // 绘制水平和垂直线
+      for (let x = startX; x <= endX; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, startY);
+        ctx.lineTo(x, endY);
+        ctx.stroke();
+      }
+
+      for (let y = startY; y <= endY; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(startX, y);
+        ctx.lineTo(endX, y);
+        ctx.stroke();
+      }
+
+      // 渲染页面子节点（在坐标变换内）
+      if (currentPage) {
+        const pageChildren = currentPage.children;
+        pageChildren.forEach((nodeId) => {
+          const nodeState = nodeTree.getNodeById(nodeId);
+          if (nodeState) {
+            switch (nodeState.type) {
+              case "rectangle": {
+                drawRectangle(ctx, nodeState as Rectangle);
+                break;
+              }
+            }
+          }
+        });
+      }
+
+      // 恢复坐标变换
+      ctx.restore();
+    },
+    [currentPage, drawRectangle]
+  );
 
   const drawRulers = (
     ctx: CanvasRenderingContext2D,
     canvas: HTMLCanvasElement
   ) => {
+    const currentView = coordinateSystemManager.getViewState();
+
     // 计算标尺步长，确保步长为10的倍数
     let rulerStep = 10;
-    while (rulerStep * scale < 50) {
+    while (rulerStep * currentView.scale < 50) {
       rulerStep *= 2;
     }
 
@@ -199,10 +284,12 @@ const CanvasContainer = () => {
     const viewportHeight = canvas.height;
 
     // 顶部标尺
-    const startX = Math.floor(-offset.x / scale / rulerStep) * rulerStep;
-    const endX = startX + viewportWidth / scale + rulerStep;
+    const startX =
+      Math.floor(-currentView.pageX / currentView.scale / rulerStep) *
+      rulerStep;
+    const endX = startX + viewportWidth / currentView.scale + rulerStep;
     for (let x = startX; x <= endX; x += rulerStep) {
-      const screenX = x * scale + offset.x;
+      const screenX = x * currentView.scale + currentView.pageX;
       const sceneX = Math.round(x);
       ctx.beginPath();
       ctx.moveTo(screenX, 0);
@@ -212,10 +299,12 @@ const CanvasContainer = () => {
     }
 
     // 左侧标尺
-    const startY = Math.floor(-offset.y / scale / rulerStep) * rulerStep;
-    const endY = startY + viewportHeight / scale + rulerStep;
+    const startY =
+      Math.floor(-currentView.pageY / currentView.scale / rulerStep) *
+      rulerStep;
+    const endY = startY + viewportHeight / currentView.scale + rulerStep;
     for (let y = startY; y <= endY; y += rulerStep) {
-      const screenY = y * scale + offset.y;
+      const screenY = y * currentView.scale + currentView.pageY;
       const sceneY = Math.round(y);
       ctx.beginPath();
       ctx.moveTo(0, screenY);
@@ -244,69 +333,105 @@ const CanvasContainer = () => {
         };
       }
     }
-  }, [scale, offset]);
+  }, [viewState]);
 
+  // 初始化渲染循环
   useEffect(() => {
-    const ctx = getCanvas2D();
-    const canvas = canvasRef.current as HTMLCanvasElement;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const svgData = `
-      <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
-      </svg>
-    `;
+    // 创建渲染循环
+    renderLoop = new RenderLoop(canvas);
+    renderLoop.setRenderCallback(drawScene);
 
-    const img = new Image();
-    img.onload = function () {
-      ctx.drawImage(img, 100, 100);
-    };
-    // 将SVG字符串转换为Data URI格式
-    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgData);
+    // 订阅数据变更
+    const unsubscribe = globalDataObserver.subscribe(() => {
+      renderLoop.markNeedsRender();
+    });
 
-    const img2 = new Image();
+    // 启动渲染循环
+    renderLoop.start();
 
-    // 图片加载完成后绘制到Canvas
-    img2.onload = function () {
-      ctx.drawImage(img2, 200, 100, 100, 100);
-    };
+    // FPS监控
+    const fpsInterval = setInterval(() => {
+      setFps(renderLoop.getFPS());
+    }, 1000);
 
-    // 设置图片的相对路径（相对于HTML文件的路径）
-    img2.src = avatar;
-
-    drawScene(ctx, canvas);
-  }, [scale, offset, ratio, scaleCenter]);
-
-  useEffect(() => {
-    if (!canvasRef.current) return; // 确保 canvasRef.current 存在
-    const canvas = canvasRef.current as HTMLCanvasElement;
-    const renderManager = new RenderManager(canvas as HTMLCanvasElement);
-
-    const canvasRenderer = new CanvasRenderer();
-
-    // 切换到 Canvas 渲染
-    renderManager.setRenderEngine(canvasRenderer);
-    renderManager.render(getCanvas2D(), scale, offset);
-    render = renderManager;
     return () => {
-      renderManager.destroy();
+      clearInterval(fpsInterval);
+      unsubscribe();
+      renderLoop.destroy();
     };
-  }, [canvasRef, scale, offset]);
+  }, [drawScene]);
 
+  // Canvas初始化
   useEffect(() => {
-    if (render) {
-      const allNodes = nodeTree.getAllNodes();
-      allNodes.forEach((node) => {
-        switch (node.type) {
-          case "rectangle": {
-            render.getRenderEngine().drawRectangle(node as Rectangle);
-          }
-        }
-      });
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      canvas2DContext = ctx;
     }
-  }, [render]);
+  }, []);
+
+  // 初始化页面视图状态和mock数据
+  useEffect(() => {
+    // 初始化mock元素数据
+    nodeTree.createAllElements(mockElementData);
+    initializeMockData();
+
+    const initialPage = pageManager.getCurrentPage();
+    if (initialPage) {
+      setCurrentPage(initialPage);
+      // 同步初始页面的视图状态
+      coordinateSystemManager.setViewState({
+        pageX: initialPage.panX,
+        pageY: initialPage.panY,
+        scale: initialPage.zoom,
+      });
+      setViewState(coordinateSystemManager.getViewState());
+      setZoomIndicator(`${Math.round(initialPage.zoom * 100)}%`);
+    }
+  }, []);
+
+  // 当数据变更时通知渲染循环
+  useEffect(() => {
+    globalDataObserver.markChanged();
+  }, [viewState, ratio, scaleCenter, currentPage]);
 
   return (
     <div style={{ position: "relative" }}>
+      {/* 页面管理面板 */}
+      <PagePanel
+        isVisible={showPagePanel}
+        onClose={() => setShowPagePanel(false)}
+        onPageSwitch={handlePageSwitch}
+        currentPage={currentPage}
+      />
+
+      {/* 页面切换按钮 */}
+      <button
+        onClick={() => setShowPagePanel(!showPagePanel)}
+        style={{
+          position: "absolute",
+          left: showPagePanel ? 260 : 10,
+          top: 10,
+          padding: "10px 15px",
+          backgroundColor: "rgba(0,0,0,0.8)",
+          color: "#fff",
+          border: "none",
+          borderRadius: "6px",
+          cursor: "pointer",
+          zIndex: 1001,
+          transition: "all 0.3s ease",
+          fontSize: "14px",
+          fontWeight: "500",
+        }}
+      >
+        {showPagePanel ? "◀" : "▶"} 页面
+      </button>
+
       <canvas
         ref={canvasRef}
         id="canvasContainer"
@@ -319,13 +444,21 @@ const CanvasContainer = () => {
           position: "absolute",
           top: 10,
           right: 10,
-          backgroundColor: "rgba(0,0,0,0.5)",
+          backgroundColor: "rgba(0,0,0,0.8)",
           color: "#fff",
-          padding: "5px 10px",
-          borderRadius: "5px",
+          padding: "12px 16px",
+          borderRadius: "6px",
+          fontSize: "14px",
         }}
       >
-        缩放: {zoomIndicator}
+        <div style={{ fontWeight: "600", marginBottom: "4px" }}>
+          当前页面: {currentPage?.name || "无"}
+        </div>
+        <div style={{ marginBottom: "4px" }}>缩放: {zoomIndicator}</div>
+        <div style={{ fontSize: "12px", color: "#ccc", marginBottom: "4px" }}>
+          画布: {currentPage?.width || 0} × {currentPage?.height || 0}
+        </div>
+        <div style={{ fontSize: "11px", color: "#888" }}>FPS: {fps}</div>
       </div>
       <div
         style={{
