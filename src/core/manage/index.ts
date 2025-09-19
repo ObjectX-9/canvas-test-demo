@@ -10,4 +10,7 @@ export {
 
 export { PageManager, pageManager } from "./PageManager";
 
+export { RulerManager, rulerManager } from "./RulerManager";
+
 export type { IUniformScale, DirectKey } from "../utils/uniformScale";
+export type { RulerConfig } from "./RulerManager";

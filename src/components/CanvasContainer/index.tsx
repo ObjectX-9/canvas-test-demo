@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { DirectKey } from "../../core/utils/uniformScale";
-import { coordinateSystemManager, pageManager } from "../../core/manage";
+import {
+  coordinateSystemManager,
+  pageManager,
+  rulerManager,
+} from "../../core/manage";
 import { nodeTree } from "../../core/nodeTree";
 import { Rectangle } from "../../core/nodeTree/node/rectangle";
 import { BaseNode } from "../../core/nodeTree/node/baseNode";
@@ -192,7 +196,7 @@ const CanvasContainer = () => {
       }
 
       // 绘制标尺（在坐标变换之前）
-      drawRulers(ctx, canvas);
+      rulerManager.render(ctx, canvas);
 
       // 保存当前状态并应用缩放和平移
       ctx.save();
@@ -261,58 +265,6 @@ const CanvasContainer = () => {
     },
     [currentPage, drawRectangle]
   );
-
-  const drawRulers = (
-    ctx: CanvasRenderingContext2D,
-    canvas: HTMLCanvasElement
-  ) => {
-    const currentView = coordinateSystemManager.getViewState();
-
-    // 计算标尺步长，确保步长为10的倍数
-    let rulerStep = 10;
-    while (rulerStep * currentView.scale < 50) {
-      rulerStep *= 2;
-    }
-
-    ctx.strokeStyle = "#000";
-    ctx.font = `12px Arial`; // 固定字体大小
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
-    // 获取当前视口范围
-    const viewportWidth = canvas.width;
-    const viewportHeight = canvas.height;
-
-    // 顶部标尺
-    const startX =
-      Math.floor(-currentView.pageX / currentView.scale / rulerStep) *
-      rulerStep;
-    const endX = startX + viewportWidth / currentView.scale + rulerStep;
-    for (let x = startX; x <= endX; x += rulerStep) {
-      const screenX = x * currentView.scale + currentView.pageX;
-      const sceneX = Math.round(x);
-      ctx.beginPath();
-      ctx.moveTo(screenX, 0);
-      ctx.lineTo(screenX, 10); // 标尺高度为10像素
-      ctx.stroke();
-      ctx.fillText(`${sceneX}`, screenX, 20); // 显示刻度数值
-    }
-
-    // 左侧标尺
-    const startY =
-      Math.floor(-currentView.pageY / currentView.scale / rulerStep) *
-      rulerStep;
-    const endY = startY + viewportHeight / currentView.scale + rulerStep;
-    for (let y = startY; y <= endY; y += rulerStep) {
-      const screenY = y * currentView.scale + currentView.pageY;
-      const sceneY = Math.round(y);
-      ctx.beginPath();
-      ctx.moveTo(0, screenY);
-      ctx.lineTo(10, screenY); // 标尺高度为10像素
-      ctx.stroke();
-      ctx.fillText(`${sceneY}`, 20, screenY); // 显示刻度数值
-    }
-  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -502,6 +454,32 @@ const CanvasContainer = () => {
             <option value="LC">左</option>
             <option value="RC">右</option>
             <option value="CC">中</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="toggleRuler">标尺显示: </label>
+          <input
+            type="checkbox"
+            id="toggleRuler"
+            defaultChecked={true}
+            onChange={(e) => {
+              rulerManager.toggle(e.target.checked);
+              globalDataObserver.markChanged();
+            }}
+          />
+        </div>
+        <div>
+          <label htmlFor="rulerTheme">标尺主题: </label>
+          <select
+            id="rulerTheme"
+            defaultValue="light"
+            onChange={(e) => {
+              rulerManager.setTheme(e.target.value as "light" | "dark");
+              globalDataObserver.markChanged();
+            }}
+          >
+            <option value="light">浅色</option>
+            <option value="dark">深色</option>
           </select>
         </div>
       </div>
