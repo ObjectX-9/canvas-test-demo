@@ -1,6 +1,7 @@
 import { IEventHandler, EventContext } from "../manage/EventManager";
 import { nodeTree } from "../nodeTree";
 import { NodeSelectionHandler } from "./nodeSelection";
+import { globalDataObserver } from "../render";
 
 /**
  * 节点拖拽事件处理器
@@ -52,8 +53,8 @@ export class NodeDragHandler implements IEventHandler {
       node.x = newX;
       node.y = newY;
 
-      // 触发重新渲染
-      // 这里可以添加渲染队列或者直接触发重绘
+      // 触发重新渲染，让节点跟随鼠标实时移动
+      globalDataObserver.markChanged();
     }
   }
 }

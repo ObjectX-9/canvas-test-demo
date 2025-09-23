@@ -1,3 +1,5 @@
+import { globalDataObserver } from "../render";
+
 /**
  * 选择状态管理器
  * 负责管理当前选中的节点
@@ -93,6 +95,9 @@ export class SelectionStore {
   private notifyListeners(): void {
     const selectedIds = this.getSelectedNodeIds();
     this.listeners.forEach((listener) => listener(selectedIds));
+
+    // 通知渲染系统更新选中框显示
+    globalDataObserver.markChanged();
   }
 }
 
