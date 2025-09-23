@@ -15,10 +15,11 @@ export class MouseMoveHandler implements IEventHandler {
   private lastMousePosition = { x: 0, y: 0 };
   private currentHoverNode: BaseNode | null = null;
 
-  readonly type = "mousemove";
+  readonly type = "canvas-panning";
+  readonly nativeEventType = "mousemove";
 
   canHandle(event: Event): boolean {
-    return event.type === "mousemove";
+    return event.type === this.nativeEventType;
   }
 
   handle(event: Event, context: EventContext): void {

@@ -1,27 +1,29 @@
-import { IEventHandler, EventContext } from "../manage/EventManager";
+import { EventContext } from "../manage/EventManager";
+import { IMouseDownSubHandler } from "./mouseDown";
 import { HitTestUtils } from "../utils/hitTest";
 import { nodeTree } from "../nodeTree";
 
 /**
- * 节点选择事件处理器
+ * 节点选择子处理器
  * 处理鼠标点击选择节点的逻辑
  */
-export class NodeSelectionHandler implements IEventHandler {
-  readonly type = "mousedown";
+export class NodeSelectionHandler implements IMouseDownSubHandler {
+  readonly name = "node-selection";
   private isDraggingNode = false;
   private dragOffset = { x: 0, y: 0 };
   private selectedNodeId: string | null = null;
 
-  canHandle(event: Event): boolean {
-    return event.type === "mousedown";
+  canHandle(_event: MouseEvent, _context: EventContext): boolean {
+    // 总是可以处理，在handle方法中判断具体逻辑
+    return true;
   }
 
-  handle(event: Event, context: EventContext): void {
-    const mouseEvent = event as MouseEvent;
+  handle(event: MouseEvent, context: EventContext): boolean {
+    const mouseEvent = event;
     const { canvas, currentPage, selectionStore, coordinateSystemManager } =
       context;
 
-    if (!currentPage) return;
+    if (!currentPage) return false;
 
     // 获取鼠标在canvas中的位置
     const rect = canvas.getBoundingClientRect();
@@ -62,6 +64,9 @@ export class NodeSelectionHandler implements IEventHandler {
 
       // 阻止默认的视图拖拽，准备节点拖拽
       context.isDragging.current = false;
+
+      // 返回true表示事件已处理，阻止后续处理器和默认行为
+      return true;
     } else {
       // 点击了空白区域
       if (!(mouseEvent.ctrlKey || mouseEvent.metaKey)) {
@@ -69,14 +74,12 @@ export class NodeSelectionHandler implements IEventHandler {
         selectionStore.clearSelection();
       }
 
-      // 启动视图拖拽
+      // 重置节点拖拽状态
       this.isDraggingNode = false;
       this.selectedNodeId = null;
-      context.isDragging.current = true;
-      context.lastMousePosition.current = {
-        x: mouseEvent.clientX,
-        y: mouseEvent.clientY,
-      };
+
+      // 返回false表示让默认行为处理（启动画布拖拽）
+      return false;
     }
   }
 

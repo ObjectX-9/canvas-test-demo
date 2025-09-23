@@ -3,10 +3,11 @@ import { coordinateSystemManager } from "../manage";
 import { ViewUtils } from "../types";
 
 export class WheelHandler implements IEventHandler {
-  readonly type = "wheel";
+  readonly type = "zoom";
+  readonly nativeEventType = "wheel";
 
   canHandle(event: Event): boolean {
-    return event.type === this.type;
+    return event.type === this.nativeEventType;
   }
 
   handle(event: Event, context: EventContext): void {

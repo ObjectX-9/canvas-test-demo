@@ -7,7 +7,8 @@ import { NodeSelectionHandler } from "./nodeSelection";
  * 处理节点移动的逻辑
  */
 export class NodeDragHandler implements IEventHandler {
-  readonly type = "mousemove";
+  readonly type = "node-drag";
+  readonly nativeEventType = "mousemove";
   private nodeSelectionHandler: NodeSelectionHandler;
 
   constructor(nodeSelectionHandler: NodeSelectionHandler) {
@@ -15,7 +16,10 @@ export class NodeDragHandler implements IEventHandler {
   }
 
   canHandle(event: Event): boolean {
-    return event.type === "mousemove" && this.nodeSelectionHandler.isDragging();
+    return (
+      event.type === this.nativeEventType &&
+      this.nodeSelectionHandler.isDragging()
+    );
   }
 
   handle(event: Event, context: EventContext): void {
@@ -58,7 +62,8 @@ export class NodeDragHandler implements IEventHandler {
  * 节点拖拽结束处理器
  */
 export class NodeDragEndHandler implements IEventHandler {
-  readonly type = "mouseup";
+  readonly type = "node-drag-end";
+  readonly nativeEventType = "mouseup";
   private nodeSelectionHandler: NodeSelectionHandler;
 
   constructor(nodeSelectionHandler: NodeSelectionHandler) {
@@ -66,7 +71,10 @@ export class NodeDragEndHandler implements IEventHandler {
   }
 
   canHandle(event: Event): boolean {
-    return event.type === "mouseup" && this.nodeSelectionHandler.isDragging();
+    return (
+      event.type === this.nativeEventType &&
+      this.nodeSelectionHandler.isDragging()
+    );
   }
 
   handle(_event: Event, context: EventContext): void {

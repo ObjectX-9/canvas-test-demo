@@ -23,7 +23,8 @@ export interface EventContext {
  * 事件处理器接口
  */
 export interface IEventHandler {
-  readonly type: string;
+  readonly type: string; // 处理器的语义化名称
+  readonly nativeEventType: string; // 对应的原生DOM事件类型
   canHandle(event: Event): boolean;
   handle(event: Event, context: EventContext): void;
 }
@@ -33,7 +34,10 @@ export interface IEventHandler {
  * 负责注册和分发画布事件到具体的处理器
  */
 export class EventManager {
-  private handlers: Map<string, IEventHandler[]> = new Map();
+  // 按原生事件类型存储处理器（用于事件分发）
+  private handlersByNativeEvent: Map<string, IEventHandler[]> = new Map();
+  // 按处理器名称存储（用于管理和调试）
+  private handlersByName: Map<string, IEventHandler> = new Map();
   private context: EventContext | null = null;
   private initialized: boolean = false;
   private boundEventListeners: Map<
@@ -70,38 +74,49 @@ export class EventManager {
   /**
    * 注册事件处理器
    */
-  register(eventType: string, handler: IEventHandler): void {
-    if (!this.handlers.has(eventType)) {
-      this.handlers.set(eventType, []);
+  register(handler: IEventHandler): void {
+    const nativeEventType = handler.nativeEventType;
+
+    // 按原生事件类型存储（用于事件分发）
+    if (!this.handlersByNativeEvent.has(nativeEventType)) {
+      this.handlersByNativeEvent.set(nativeEventType, []);
     }
-    this.handlers.get(eventType)!.push(handler);
+    this.handlersByNativeEvent.get(nativeEventType)!.push(handler);
+
+    // 按处理器名称存储（用于管理）
+    this.handlersByName.set(handler.type, handler);
   }
 
   /**
    * 注销事件处理器
    */
-  unregister(eventType: string, handler: IEventHandler): void {
-    const handlers = this.handlers.get(eventType);
+  unregister(handler: IEventHandler): void {
+    // 从原生事件类型映射中移除
+    const handlers = this.handlersByNativeEvent.get(handler.nativeEventType);
     if (handlers) {
       const index = handlers.indexOf(handler);
       if (index > -1) {
         handlers.splice(index, 1);
       }
     }
+
+    // 从名称映射中移除
+    this.handlersByName.delete(handler.type);
   }
 
   /**
    * 处理事件
    */
-  handleEvent(eventType: string, event: Event): void {
+  handleEvent(nativeEventType: string, event: Event): void {
     if (!this.context) {
       console.warn("事件上下文未设置");
       return;
     }
 
-    const handlers = this.handlers.get(eventType);
+    const handlers = this.handlersByNativeEvent.get(nativeEventType);
     if (!handlers || handlers.length === 0) {
-      console.warn(`未找到 ${eventType} 事件的处理器`);
+      // 降级为debug级别，避免过多警告
+      console.debug(`未找到 ${nativeEventType} 事件的处理器`);
       return;
     }
 
@@ -118,17 +133,32 @@ export class EventManager {
   }
 
   /**
-   * 获取已注册的事件类型
+   * 获取已注册的处理器名称
    */
-  getRegisteredEventTypes(): string[] {
-    return Array.from(this.handlers.keys());
+  getRegisteredHandlerNames(): string[] {
+    return Array.from(this.handlersByName.keys());
+  }
+
+  /**
+   * 获取已注册的原生事件类型
+   */
+  getRegisteredNativeEventTypes(): string[] {
+    return Array.from(this.handlersByNativeEvent.keys());
+  }
+
+  /**
+   * 根据名称获取处理器
+   */
+  getHandlerByName(name: string): IEventHandler | undefined {
+    return this.handlersByName.get(name);
   }
 
   /**
    * 清空所有处理器
    */
   clear(): void {
-    this.handlers.clear();
+    this.handlersByNativeEvent.clear();
+    this.handlersByName.clear();
   }
 
   /**
