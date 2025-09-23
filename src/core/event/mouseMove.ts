@@ -1,16 +1,20 @@
-import { IEventHandler, EventContext } from "./EventManager";
+import { IEventHandler, EventContext } from "../manage/EventManager";
 import { coordinateSystemManager } from "../manage";
 import { globalDataObserver } from "../render";
 import { nodeTree } from "../nodeTree";
+import { ViewMatrix, ViewUtils } from "../types";
 import { BaseNode } from "../nodeTree/node/baseNode";
+import { Page } from "../nodeTree/node/page";
 
-// 悬停节点的全局状态
-let hoveredNode: BaseNode | undefined;
+// 悬停节点的全局状态（已移至类内部管理）
 
 /**
  * 鼠标移动事件处理器
  */
 export class MouseMoveHandler implements IEventHandler {
+  private lastMousePosition = { x: 0, y: 0 };
+  private currentHoverNode: BaseNode | null = null;
+
   readonly type = "mousemove";
 
   canHandle(event: Event): boolean {
@@ -18,26 +22,34 @@ export class MouseMoveHandler implements IEventHandler {
   }
 
   handle(event: Event, context: EventContext): void {
-    const mouseEvent = event as MouseEvent;
-    const { isDragging } = context;
+    const mouseMoveEvent = event as MouseEvent;
+    const { currentPage, setViewState, isDragging } = context;
 
-    // 处理画布拖拽
-    if (isDragging.current) {
-      this.handleCanvasDrag(mouseEvent, context);
+    if (isDragging.current && currentPage) {
+      // 执行画布拖拽（节点拖拽由NodeDragHandler处理）
+      this.handlePanning(mouseMoveEvent, currentPage, setViewState);
     }
 
     // 处理节点悬停检测
-    this.handleNodeHover(mouseEvent);
+    this.handleNodeHover(mouseMoveEvent);
+
+    // 更新鼠标位置记录
+    this.lastMousePosition = {
+      x: mouseMoveEvent.clientX,
+      y: mouseMoveEvent.clientY,
+    };
   }
 
   /**
-   * 处理画布拖拽
+   * 处理画布拖拽平移
    */
-  private handleCanvasDrag(event: MouseEvent, context: EventContext): void {
-    const { lastMousePosition, currentPage, setViewState } = context;
-
-    const deltaX = event.clientX - lastMousePosition.current.x;
-    const deltaY = event.clientY - lastMousePosition.current.y;
+  private handlePanning(
+    event: MouseEvent,
+    currentPage: Page,
+    setViewState: (view: ViewMatrix) => void
+  ): void {
+    const deltaX = event.clientX - this.lastMousePosition.x;
+    const deltaY = event.clientY - this.lastMousePosition.y;
 
     // 使用坐标系统管理器更新视图位置
     coordinateSystemManager.updateViewPosition(deltaX, deltaY);
@@ -46,14 +58,15 @@ export class MouseMoveHandler implements IEventHandler {
 
     // 同步视图状态到当前页面
     if (currentPage) {
-      currentPage.panX = updatedView.pageX;
-      currentPage.panY = updatedView.pageY;
+      const translation = ViewUtils.getTranslation(updatedView);
+      currentPage.panX = translation.pageX;
+      currentPage.panY = translation.pageY;
     }
 
     // 通知数据变更
     globalDataObserver.markChanged();
 
-    lastMousePosition.current = { x: event.clientX, y: event.clientY };
+    this.lastMousePosition = { x: event.clientX, y: event.clientY };
   }
 
   /**
@@ -67,30 +80,29 @@ export class MouseMoveHandler implements IEventHandler {
       event.clientX,
       event.clientY
     );
-    const canvasX = worldPoint.x;
-    const canvasY = worldPoint.y;
+    const worldX = worldPoint.x;
+    const worldY = worldPoint.y;
 
-    // 检测鼠标是否在节点上
+    // 检测悬停的节点
     for (const node of allNodes) {
       if (
-        (!hoveredNode || hoveredNode.id !== node.id) &&
-        this.isPointerInsideNode(node, canvasX, canvasY)
+        (!this.currentHoverNode || this.currentHoverNode.id !== node.id) &&
+        this.isPointerInsideNode(node, worldX, worldY)
       ) {
         console.log("鼠标在节点上:", node.id);
+        this.currentHoverNode = node;
 
-        hoveredNode = node;
+        // 改变节点填充色（如果有相关方法）
         if (typeof node.changeFills === "function") {
-          node.changeFills();
+          node.changeFills(); // 悬停效果
         }
         break;
       }
     }
-
-    console.log("画布位置", canvasX, canvasY);
   }
 
   /**
-   * 判断鼠标是否在节点内
+   * 检查点是否在节点内
    */
   private isPointerInsideNode(node: BaseNode, x: number, y: number): boolean {
     return (

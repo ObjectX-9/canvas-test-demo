@@ -1,24 +1,18 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { DirectKey } from "../../core/utils/uniformScale";
 import { coordinateSystemManager, pageManager } from "../../core/manage";
+import { ViewUtils } from "../../core/types";
 
 import { Page } from "../../core/nodeTree/node/page";
 import { PagePanel } from "./PagePanel";
-import { PropertyPanel } from "../PropertyPanel";
+import { PropertyPanel } from "./PropertyPanel";
 import { RenderLoop } from "../../core/render/RenderLoop";
 import { globalDataObserver } from "../../core/render/DataObserver";
 import { globalCanvasRenderEngine } from "../../core/render/canvas";
 import { globalEventManager, initializeEventSystem } from "../../core/event";
 import { selectionStore } from "../../core/store/SelectionStore";
 
-let canvas2DContext: CanvasRenderingContext2D;
 let renderLoop: RenderLoop;
-
-export const getCanvas2D = () => {
-  return canvas2DContext;
-};
-
-// getRenderManager已移除 - 使用新的Canvas渲染架构
 
 const CanvasContainer = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -26,7 +20,7 @@ const CanvasContainer = () => {
     coordinateSystemManager.getViewState()
   );
   const [zoomIndicator, setZoomIndicator] = useState(
-    `${Math.round(viewState.scale * 100)}%`
+    `${Math.round(ViewUtils.getScale(viewState) * 100)}%`
   ); // 缩放标识
   const [ratio, setRatio] = useState(1); // 比例尺
   const [scaleCenter, setScaleCenter] = useState<DirectKey>("CC"); // 缩放中心
@@ -43,11 +37,8 @@ const CanvasContainer = () => {
     setCurrentPage(page);
 
     // 同步页面的视图状态到坐标系统管理器
-    coordinateSystemManager.setViewState({
-      pageX: page.panX,
-      pageY: page.panY,
-      scale: page.zoom,
-    });
+    const newViewState = ViewUtils.create(page.panX, page.panY, page.zoom);
+    coordinateSystemManager.setViewState(newViewState);
     setViewState(coordinateSystemManager.getViewState());
     setZoomIndicator(`${Math.round(page.zoom * 100)}%`);
 
@@ -72,40 +63,38 @@ const CanvasContainer = () => {
   // Canvas事件监听器
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas && canvas.getContext) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        canvas2DContext = ctx;
+    if (canvas) {
+      // 初始化Canvas渲染系统
+      globalCanvasRenderEngine.initializeCanvas(canvas);
 
-        // 初始化事件系统（只在首次渲染时）
-        if (!globalEventManager.isInitialized()) {
-          initializeEventSystem();
-        }
-
-        // 创建事件上下文
-        const eventContext = {
-          canvas,
-          currentPage,
-          viewState,
-          isDragging,
-          lastMousePosition,
-          selectionStore,
-          coordinateSystemManager,
-          setViewState,
-          setZoomIndicator,
-        };
-
-        // 设置事件上下文
-        globalEventManager.setContext(eventContext);
-
-        // 绑定画布事件
-        globalEventManager.bindCanvasEvents(canvas);
-
-        return () => {
-          // 解绑画布事件
-          globalEventManager.unbindCanvasEvents(canvas);
-        };
+      // 初始化事件系统（只在首次渲染时）
+      if (!globalEventManager.isInitialized()) {
+        initializeEventSystem();
       }
+
+      // 创建事件上下文
+      const eventContext = {
+        canvas,
+        currentPage,
+        viewState,
+        isDragging,
+        lastMousePosition,
+        selectionStore,
+        coordinateSystemManager,
+        setViewState,
+        setZoomIndicator,
+      };
+
+      // 设置事件上下文
+      globalEventManager.setContext(eventContext);
+
+      // 绑定画布事件
+      globalEventManager.bindCanvasEvents(canvas);
+
+      return () => {
+        // 解绑画布事件
+        globalEventManager.unbindCanvasEvents(canvas);
+      };
     }
   }, []);
 
@@ -138,30 +127,19 @@ const CanvasContainer = () => {
     };
   }, [drawScene]);
 
-  // Canvas初始化
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      canvas2DContext = ctx;
-    }
-  }, []);
-
   // 初始化页面视图状态
   useEffect(() => {
     // 页面和子节点数据在PageManager中自动初始化
-
     const initialPage = pageManager.getCurrentPage();
     if (initialPage) {
       setCurrentPage(initialPage);
       // 同步初始页面的视图状态
-      coordinateSystemManager.setViewState({
-        pageX: initialPage.panX,
-        pageY: initialPage.panY,
-        scale: initialPage.zoom,
-      });
+      const initialViewState = ViewUtils.create(
+        initialPage.panX,
+        initialPage.panY,
+        initialPage.zoom
+      );
+      coordinateSystemManager.setViewState(initialViewState);
       setViewState(coordinateSystemManager.getViewState());
       setZoomIndicator(`${Math.round(initialPage.zoom * 100)}%`);
     }

@@ -1,7 +1,7 @@
 // 导出事件管理器
-export { EventManager, globalEventManager } from "./EventManager";
-import { globalEventManager } from "./EventManager";
-export type { IEventHandler, EventContext } from "./EventManager";
+export { EventManager, globalEventManager } from "../manage/EventManager";
+import { globalEventManager } from "../manage/EventManager";
+export type { IEventHandler, EventContext } from "../manage/EventManager";
 
 // 导出具体的事件处理器
 export { MouseMoveHandler } from "./mouseMove";
@@ -16,8 +16,7 @@ import { MouseUpHandler } from "./mouseUp";
 import { WheelHandler } from "./wheelHandler";
 import { NodeSelectionHandler } from "./nodeSelection";
 import { NodeDragHandler, NodeDragEndHandler } from "./nodeDrag";
-import { IEventHandler } from "./EventManager";
-
+import { IEventHandler } from "../manage/EventManager";
 // 创建节点选择处理器实例（需要在其他处理器中共享）
 const nodeSelectionHandler = new NodeSelectionHandler();
 

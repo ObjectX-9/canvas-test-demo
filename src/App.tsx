@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import CanvasContainer from "./components/CanvasContainer";
-import { initJsdState } from "./core/init/init";
+import { initState } from "./core/init/init";
 
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    initJsdState({})
+    // 用后端存储数据初始化节点树
+    initState({});
     setIsInitialized(true);
   }, []);
 

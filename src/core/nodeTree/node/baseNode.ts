@@ -27,16 +27,32 @@ export class BaseNode {
     return this._state.x ?? 0;
   }
 
+  set x(x: number) {
+    this._state.x = x;
+  }
+
   get y() {
     return this._state.y ?? 0;
+  }
+
+  set y(y: number) {
+    this._state.y = y;
   }
 
   get w() {
     return this._state.w ?? 0;
   }
 
+  set w(w: number) {
+    this._state.w = w;
+  }
+
   get h() {
     return this._state.h ?? 0;
+  }
+
+  set h(h: number) {
+    this._state.h = h;
   }
 
   get rotation() {

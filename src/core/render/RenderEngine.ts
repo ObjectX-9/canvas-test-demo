@@ -11,6 +11,7 @@ import {
   IRulerRenderer,
   IBackgroundRenderer,
 } from "./interfaces/IRenderer";
+import { ViewUtils } from "../types";
 
 /**
  * 抽象渲染引擎
@@ -110,7 +111,14 @@ export class RenderEngine {
 
     // 5. 绘制网格
     if (renderGrid && this.gridRenderer) {
-      this.gridRenderer.renderGrid(graphics, canvasSize, viewState);
+      const translation = ViewUtils.getTranslation(viewState);
+      const scale = ViewUtils.getScale(viewState);
+      const legacyViewState = {
+        pageX: translation.pageX,
+        pageY: translation.pageY,
+        scale: scale,
+      };
+      this.gridRenderer.renderGrid(graphics, canvasSize, legacyViewState);
     }
 
     // 6. 创建渲染上下文
@@ -118,7 +126,7 @@ export class RenderEngine {
       graphics,
       canvasSize,
       viewMatrix: Array.from(coordinateSystemManager.getViewTransformMatrix()),
-      scale: coordinateSystemManager.getViewState().scale,
+      scale: ViewUtils.getScale(coordinateSystemManager.getViewState()),
     };
 
     // 7. 渲染页面子节点
@@ -138,7 +146,14 @@ export class RenderEngine {
 
     // 9. 绘制标尺（在最顶层，不受坐标变换影响）
     if (renderRulers && this.rulerRenderer) {
-      this.rulerRenderer.renderRulers(graphics, canvasSize, viewState);
+      const translation = ViewUtils.getTranslation(viewState);
+      const scale = ViewUtils.getScale(viewState);
+      const legacyViewState = {
+        pageX: translation.pageX,
+        pageY: translation.pageY,
+        scale: scale,
+      };
+      this.rulerRenderer.renderRulers(graphics, canvasSize, legacyViewState);
     }
   }
 
@@ -156,7 +171,7 @@ export class RenderEngine {
       graphics,
       canvasSize: graphics.getCanvasSize(),
       viewMatrix: Array.from(coordinateSystemManager.getViewTransformMatrix()),
-      scale: coordinateSystemManager.getViewState().scale,
+      scale: ViewUtils.getScale(coordinateSystemManager.getViewState()),
     };
 
     return this.registry.renderNode(node, context);

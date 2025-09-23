@@ -1,4 +1,4 @@
-import { IEventHandler, EventContext } from "./EventManager";
+import { IEventHandler, EventContext } from "../manage/EventManager";
 import { HitTestUtils } from "../utils/hitTest";
 import { nodeTree } from "../nodeTree";
 

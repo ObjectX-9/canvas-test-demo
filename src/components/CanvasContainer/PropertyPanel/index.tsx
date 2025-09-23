@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { selectionStore } from "../../core/store/SelectionStore";
-import { nodeTree } from "../../core/nodeTree";
-import { BaseState } from "../../core/types/nodes/baseState";
 import styles from "./index.module.less";
+import { nodeTree } from "../../../core/nodeTree";
+import { selectionStore } from "../../../core/store/SelectionStore";
+import { BaseState } from "../../../core/types/nodes/baseState";
 
 interface PropertyPanelProps {
   className?: string;

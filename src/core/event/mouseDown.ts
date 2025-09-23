@@ -1,4 +1,4 @@
-import { IEventHandler, EventContext } from "./EventManager";
+import { IEventHandler, EventContext } from "../manage/EventManager";
 
 /**
  * 鼠标按下事件处理器

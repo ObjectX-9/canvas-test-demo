@@ -1,7 +1,7 @@
 import { Page } from "../nodeTree/node/page";
-import { ViewType } from "../types";
+import { ViewMatrix } from "../types";
 import { SelectionStore } from "../store/SelectionStore";
-import { CoordinateSystemManager } from "../manage/CoordinateSystemManager";
+import { CoordinateSystemManager } from "./CoordinateSystemManager";
 
 /**
  * 事件上下文接口
@@ -10,12 +10,12 @@ import { CoordinateSystemManager } from "../manage/CoordinateSystemManager";
 export interface EventContext {
   canvas: HTMLCanvasElement;
   currentPage: Page | null;
-  viewState: ViewType;
+  viewState: ViewMatrix;
   isDragging: React.MutableRefObject<boolean>;
   lastMousePosition: React.MutableRefObject<{ x: number; y: number }>;
   selectionStore: SelectionStore;
   coordinateSystemManager: CoordinateSystemManager;
-  setViewState: (state: ViewType) => void;
+  setViewState: (state: ViewMatrix) => void;
   setZoomIndicator: (zoom: string) => void;
 }
 

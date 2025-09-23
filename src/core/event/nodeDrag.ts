@@ -1,4 +1,4 @@
-import { IEventHandler, EventContext } from "./EventManager";
+import { IEventHandler, EventContext } from "../manage/EventManager";
 import { nodeTree } from "../nodeTree";
 import { NodeSelectionHandler } from "./nodeSelection";
 
