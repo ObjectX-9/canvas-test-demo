@@ -49,6 +49,10 @@ export class Page extends BaseNode {
     return this._state.children ?? [];
   }
 
+  set children(children: string[]) {
+    this._state.children = children;
+  }
+
   get isActive() {
     return this._state.isActive ?? false;
   }
@@ -83,8 +87,12 @@ export class Page extends BaseNode {
 
   // 添加子节点
   addChild(nodeId: string) {
-    if (!this.children.includes(nodeId)) {
-      this._state.children = [...this.children, nodeId];
+    // 确保 children 数组存在
+    if (!this._state.children) {
+      this._state.children = [];
+    }
+    if (!this._state.children.includes(nodeId)) {
+      this._state.children.push(nodeId);
     }
   }
 
