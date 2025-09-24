@@ -13,6 +13,7 @@ export { MouseDownHandler } from "./mouseDown";
 export type { IMouseDownSubHandler } from "./mouseDown";
 export { NodeCreationHandler } from "./nodeCreation";
 export { DragCreationHandler, DragCreationEndHandler } from "./dragCreation";
+export { PencilSubHandler } from "./pencilSubHandler";
 
 // 导出事件处理器工厂函数
 import { MouseMoveHandler } from "./mouseMove";
@@ -23,6 +24,7 @@ import { NodeDragHandler, NodeDragEndHandler } from "./nodeDrag";
 import { MouseDownHandler } from "./mouseDown";
 import { NodeCreationHandler } from "./nodeCreation";
 import { DragCreationHandler, DragCreationEndHandler } from "./dragCreation";
+import { PencilSubHandler } from "./pencilSubHandler";
 import { IEventHandler } from "../manage/EventManager";
 
 // 创建节点选择处理器实例（需要在其他处理器中共享）
@@ -31,8 +33,12 @@ const nodeSelectionHandler = new NodeSelectionHandler();
 // 创建节点创建处理器实例
 const nodeCreationHandler = new NodeCreationHandler();
 
+// 创建画笔子处理器实例
+const pencilSubHandler = new PencilSubHandler();
+
 // 创建主mousedown处理器并注册子处理器
 const mouseDownHandler = new MouseDownHandler();
+mouseDownHandler.registerSubHandler(pencilSubHandler); // 画笔绘制最高优先级
 mouseDownHandler.registerSubHandler(nodeCreationHandler); // 节点创建优先级更高
 mouseDownHandler.registerSubHandler(nodeSelectionHandler); // 节点选择作为fallback
 
@@ -53,7 +59,12 @@ export function createBuiltinEventHandlers(): IEventHandler[] {
 }
 
 // 导出处理器实例供外部使用
-export { nodeSelectionHandler, nodeCreationHandler, mouseDownHandler };
+export {
+  nodeSelectionHandler,
+  nodeCreationHandler,
+  mouseDownHandler,
+  pencilSubHandler,
+};
 
 /**
  * 初始化事件系统

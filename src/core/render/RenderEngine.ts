@@ -185,6 +185,7 @@ export class RenderEngine {
 
     for (const nodeId of page.children) {
       const nodeState = nodeTree.getNodeById(nodeId);
+
       if (nodeState) {
         // 这里需要根据节点状态创建节点实例
         // 假设我们有一个工厂方法来创建节点实例
@@ -194,6 +195,7 @@ export class RenderEngine {
         }
       }
     }
+
     return nodes;
   }
 

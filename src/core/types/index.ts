@@ -146,3 +146,9 @@ export type XYWH = {
 export type ElementCollections = {
   [key: string]: BaseState;
 };
+
+// 导出节点类型定义
+export * from "./nodes/baseState";
+export * from "./nodes/page";
+export * from "./nodes/rectangle";
+export * from "./nodes/pencil";

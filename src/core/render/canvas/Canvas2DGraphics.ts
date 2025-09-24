@@ -42,6 +42,21 @@ export class Canvas2DGraphics implements IGraphicsAPI {
     this.ctx.lineTo(x, y);
   }
 
+  quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
+    this.ctx.quadraticCurveTo(cpx, cpy, x, y);
+  }
+
+  bezierCurveTo(
+    cp1x: number,
+    cp1y: number,
+    cp2x: number,
+    cp2y: number,
+    x: number,
+    y: number
+  ): void {
+    this.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
+  }
+
   arc(
     x: number,
     y: number,
@@ -77,6 +92,22 @@ export class Canvas2DGraphics implements IGraphicsAPI {
 
   setLineWidth(width: number): void {
     this.ctx.lineWidth = width;
+  }
+
+  setLineCap(lineCap: "butt" | "round" | "square"): void {
+    this.ctx.lineCap = lineCap;
+  }
+
+  setLineJoin(lineJoin: "round" | "bevel" | "miter"): void {
+    this.ctx.lineJoin = lineJoin;
+  }
+
+  setLineDash(segments: number[]): void {
+    this.ctx.setLineDash(segments);
+  }
+
+  setGlobalAlpha(alpha: number): void {
+    this.ctx.globalAlpha = alpha;
   }
 
   setFont(font: string): void {

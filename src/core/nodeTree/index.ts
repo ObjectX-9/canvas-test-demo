@@ -1,9 +1,11 @@
 import { ElementCollections } from "../types";
 import { BaseState } from "../types/nodes/baseState";
 import { RectangleState } from "../types/nodes/rectangle";
+import { PencilState } from "../types/nodes/pencil";
 import { PageState } from "../types/nodes/page";
 import { BaseNode } from "./node/baseNode";
 import { Rectangle } from "./node/rectangle";
+import { Pencil } from "./node/pencil";
 import { Page } from "./node/page";
 import { elementStore } from "../store/ElementStore";
 
@@ -18,6 +20,10 @@ export class NodeTree {
       switch (nodeState.type) {
         case "rectangle": {
           node = new Rectangle(nodeState as RectangleState);
+          break;
+        }
+        case "pencil": {
+          node = new Pencil(nodeState as PencilState);
           break;
         }
         case "page": {

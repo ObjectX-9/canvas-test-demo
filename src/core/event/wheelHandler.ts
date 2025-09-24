@@ -13,7 +13,7 @@ export class WheelHandler implements IEventHandler {
   handle(event: Event, context: EventContext): void {
     console.log("✅ ~  wheel event:", event);
     const wheelEvent = event as WheelEvent;
-    const { currentPage, setViewState, setZoomIndicator } = context;
+    const { currentPage, setViewState } = context;
 
     // 阻止默认的滚动行为
     wheelEvent.preventDefault();
@@ -32,7 +32,6 @@ export class WheelHandler implements IEventHandler {
 
     const updatedView = coordinateSystemManager.getViewState();
     setViewState(updatedView);
-    setZoomIndicator(`${Math.round(newScale * 100)}%`);
 
     // 同步视图状态到当前页面
     if (currentPage) {

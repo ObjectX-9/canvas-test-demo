@@ -13,6 +13,15 @@ export interface IGraphicsAPI {
   closePath(): void;
   moveTo(x: number, y: number): void;
   lineTo(x: number, y: number): void;
+  quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void;
+  bezierCurveTo(
+    cp1x: number,
+    cp1y: number,
+    cp2x: number,
+    cp2y: number,
+    x: number,
+    y: number
+  ): void;
   arc(
     x: number,
     y: number,
@@ -31,6 +40,10 @@ export interface IGraphicsAPI {
   setFillStyle(style: string): void;
   setStrokeStyle(style: string): void;
   setLineWidth(width: number): void;
+  setLineCap(lineCap: "butt" | "round" | "square"): void;
+  setLineJoin(lineJoin: "round" | "bevel" | "miter"): void;
+  setLineDash(segments: number[]): void;
+  setGlobalAlpha(alpha: number): void;
   setFont(font: string): void;
   setTextAlign(align: "start" | "end" | "left" | "right" | "center"): void;
   setTextBaseline(
