@@ -16,7 +16,6 @@ export interface EventContext {
   selectionStore: SelectionStore;
   coordinateSystemManager: CoordinateSystemManager;
   setViewState: (state: ViewMatrix) => void;
-  setZoomIndicator: (zoom: string) => void;
 }
 
 /**

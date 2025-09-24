@@ -1,4 +1,7 @@
-import { NodeType, CreationMode } from "../../components/Toolbar";
+import {
+  NodeType,
+  CreationMode,
+} from "../../components/CanvasPanel/LeftPanel/Toolbar";
 
 /**
  * 创建模式状态管理器
