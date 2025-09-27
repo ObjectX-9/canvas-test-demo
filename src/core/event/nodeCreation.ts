@@ -2,9 +2,9 @@ import { EventContext } from "../manage/EventManager";
 import { IMouseDownSubHandler } from "./mouseDown";
 import { creationStore } from "../store/CreationStore";
 import { nodeTree } from "../nodeTree";
-import { RectangleState } from "../types/nodes/rectangle";
+import { RectangleState } from "../types/nodes/rectangleState";
 import { globalDataObserver } from "../render";
-import { Page } from "../nodeTree/node/page";
+import { PageNode } from "../nodeTree/node/pageNode";
 
 /**
  * 节点创建子处理器
@@ -16,7 +16,7 @@ export class NodeCreationHandler implements IMouseDownSubHandler {
   private dragStartPoint: { x: number; y: number } | null = null;
   private previewNodeId: string | null = null;
 
-  canHandle(event: MouseEvent, context: EventContext): boolean {
+  canHandle(_event: MouseEvent, _context: EventContext): boolean {
     // 只在创建模式下处理
     return !creationStore.isSelectMode();
   }
@@ -237,7 +237,7 @@ export class NodeCreationHandler implements IMouseDownSubHandler {
    */
   private addNodeToPage(nodeId: string, pageId: string): void {
     const page = nodeTree.getNodeById(pageId);
-    if (page && page instanceof Page) {
+    if (page && page instanceof PageNode) {
       page.addChild(nodeId);
     }
   }

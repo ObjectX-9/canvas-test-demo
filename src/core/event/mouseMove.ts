@@ -2,9 +2,10 @@ import { IEventHandler, EventContext } from "../manage/EventManager";
 import { coordinateSystemManager } from "../manage";
 import { globalDataObserver } from "../render";
 import { nodeTree } from "../nodeTree";
-import { ViewMatrix, ViewUtils } from "../types";
 import { BaseNode } from "../nodeTree/node/baseNode";
-import { Page } from "../nodeTree/node/page";
+import { PageNode } from "../nodeTree/node/pageNode";
+import { ViewInfo } from "../types";
+import { viewManager } from "../manage/ViewManager";
 
 // 悬停节点的全局状态（已移至类内部管理）
 
@@ -46,8 +47,8 @@ export class MouseMoveHandler implements IEventHandler {
    */
   private handlePanning(
     event: MouseEvent,
-    currentPage: Page,
-    setViewState: (view: ViewMatrix) => void
+    currentPage: PageNode,
+    setViewState: (view: ViewInfo) => void
   ): void {
     const deltaX = event.clientX - this.lastMousePosition.x;
     const deltaY = event.clientY - this.lastMousePosition.y;
@@ -59,7 +60,7 @@ export class MouseMoveHandler implements IEventHandler {
 
     // 同步视图状态到当前页面
     if (currentPage) {
-      const translation = ViewUtils.getTranslation(updatedView);
+      const translation = viewManager.getTranslation(updatedView);
       currentPage.panX = translation.pageX;
       currentPage.panY = translation.pageY;
     }

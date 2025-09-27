@@ -1,6 +1,6 @@
 import { BaseNode } from "../../nodeTree/node/baseNode";
 import { Pencil } from "../../nodeTree/node/pencil";
-import { PathPoint } from "../../types/nodes/pencil";
+import { PathPoint } from "../../types/nodes/pencilState";
 import { BaseNodeRenderer } from "../NodeRenderer";
 import { IRenderContext } from "../interfaces/IGraphicsAPI";
 import { selectionStore } from "../../store/SelectionStore";

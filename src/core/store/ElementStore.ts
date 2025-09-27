@@ -1,15 +1,14 @@
-/* eslint-disable */
-import { ElementCollections } from "../types";
 import { BaseState } from "../types/nodes/baseState";
 
+// 用于存储需要保存在文件中的数据{element: Record<string, BaseState>}
 class ElementStore {
-  private state: ElementCollections = {};
+  private state: Record<string, BaseState> = {};
 
-  constructor(elementState: ElementCollections) {
+  constructor(elementState: Record<string, BaseState>) {
     this.state = elementState;
   }
 
-  setElement(elementState: ElementCollections) {
+  setElement(elementState: Record<string, BaseState>) {
     this.state = elementState;
   }
 
@@ -62,8 +61,6 @@ class ElementStore {
       delete this.state[id];
     }
   }
-
-  static instanceStore() {}
 }
 
 // 创建一个store

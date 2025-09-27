@@ -1,15 +1,15 @@
-import { PageState } from "../core/types/nodes/page";
+import { PageState } from "../core/types/nodes/pageState";
 
 // 示例页面数据
-export const mockPageData: PageState[] = [
-  {
+export const mockPageData: Record<string, PageState> = {
+  page_001: {
     id: "page_001",
     type: "page",
     name: "首页设计",
     backgroundColor: "#f5f5f5",
     width: 1920,
     height: 1080,
-    children: ["rect_001", "rect_002"],
+    children: ["1", "2", "3"],
     isActive: true,
     zoom: 1,
     panX: 0,
@@ -21,65 +21,8 @@ export const mockPageData: PageState[] = [
     h: 1080,
     rotation: 0,
   },
-  {
-    id: "page_002",
-    type: "page",
-    name: "详情页设计",
-    backgroundColor: "#ffffff",
-    width: 1920,
-    height: 1200,
-    children: ["rect_003"],
-    isActive: false,
-    zoom: 0.8,
-    panX: 100,
-    panY: 50,
-    fill: "#ffffff",
-    x: 0,
-    y: 0,
-    w: 1920,
-    h: 1200,
-    rotation: 0,
-  },
-  {
-    id: "page_003",
-    type: "page",
-    name: "移动端设计",
-    backgroundColor: "#fafafa",
-    width: 375,
-    height: 667,
-    children: [],
-    isActive: false,
-    zoom: 1.5,
-    panX: 0,
-    panY: 0,
-    fill: "#fafafa",
-    x: 0,
-    y: 0,
-    w: 375,
-    h: 667,
-    rotation: 0,
-  },
-];
+};
 
-// 创建页面的工厂函数
-export function createMockPage(options: Partial<PageState> = {}): PageState {
-  return {
-    id: options.id || `page_${Date.now()}`,
-    type: "page",
-    name: options.name || "新页面",
-    backgroundColor: options.backgroundColor || "#ffffff",
-    width: options.width || 1920,
-    height: options.height || 1080,
-    children: options.children || [],
-    isActive: options.isActive || false,
-    zoom: options.zoom || 1,
-    panX: options.panX || 0,
-    panY: options.panY || 0,
-    fill: options.fill || "#ffffff",
-    x: options.x || 0,
-    y: options.y || 0,
-    w: options.w || options.width || 1920,
-    h: options.h || options.height || 1080,
-    rotation: options.rotation || 0,
-  };
+export function getBasicPage(): Record<string, PageState> {
+  return mockPageData;
 }

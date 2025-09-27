@@ -1,6 +1,5 @@
 import { IEventHandler, EventContext } from "../manage/EventManager";
-import { coordinateSystemManager } from "../manage";
-import { ViewUtils } from "../types";
+import { coordinateSystemManager, viewManager } from "../manage";
 
 export class WheelHandler implements IEventHandler {
   readonly type = "zoom";
@@ -19,7 +18,7 @@ export class WheelHandler implements IEventHandler {
     wheelEvent.preventDefault();
 
     const currentView = coordinateSystemManager.getViewState();
-    const currentScale = ViewUtils.getScale(currentView);
+    const currentScale = viewManager.getScale(currentView);
     const zoomFactor = 0.01; // 缩放速率调整为0.01
     const scaleChange = wheelEvent.deltaY > 0 ? 1 - zoomFactor : 1 + zoomFactor;
     const newScale = Math.min(Math.max(0.1, currentScale * scaleChange), 5); // 确保缩放比例不会小于0.1
@@ -36,7 +35,7 @@ export class WheelHandler implements IEventHandler {
     // 同步视图状态到当前页面
     if (currentPage) {
       currentPage.zoom = newScale;
-      const translation = ViewUtils.getTranslation(updatedView);
+      const translation = viewManager.getTranslation(updatedView);
       currentPage.panX = translation.pageX;
       currentPage.panY = translation.pageY;
     }

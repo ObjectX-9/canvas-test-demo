@@ -1,13 +1,13 @@
-import { ElementCollections } from "../types";
 import { BaseState } from "../types/nodes/baseState";
-import { RectangleState } from "../types/nodes/rectangle";
-import { PencilState } from "../types/nodes/pencil";
-import { PageState } from "../types/nodes/page";
+import { RectangleState } from "../types/nodes/rectangleState";
+import { PencilState } from "../types/nodes/pencilState";
+import { PageState } from "../types/nodes/pageState";
 import { BaseNode } from "./node/baseNode";
 import { Rectangle } from "./node/rectangle";
 import { Pencil } from "./node/pencil";
-import { Page } from "./node/page";
+import { PageNode } from "./node/pageNode";
 import { elementStore } from "../store/ElementStore";
+import { pageStore } from "../store/PageStore";
 
 export class NodeTree {
   private nodes: Map<string, BaseNode> = new Map();
@@ -27,7 +27,7 @@ export class NodeTree {
           break;
         }
         case "page": {
-          node = new Page(nodeState as PageState);
+          node = new PageNode(nodeState as PageState);
           break;
         }
         default:
@@ -37,14 +37,26 @@ export class NodeTree {
       // 将节点对象添加到节点树
       this.nodes.set(nodeState.id, node);
 
-      // 将 nodeState 添加到 elementStore
-      elementStore.addElement(nodeState.id, nodeState);
+      if (nodeState.type === "page") {
+        pageStore.addPage(nodeState.id, nodeState as PageState);
+      } else {
+        // 将 nodeState 添加到 elementStore
+        elementStore.addElement(nodeState.id, nodeState);
+      }
     }
   }
 
   removeNode(id: string) {
-    if (this.nodes.has(id)) {
+    const node = this.getNodeById(id);
+    if (node) {
+      // 从节点树中移除
       this.nodes.delete(id);
+      // 从state中移除
+      if (node.type === "page") {
+        pageStore.removePage(id);
+      } else {
+        elementStore.removeElement(id);
+      }
     }
   }
 
@@ -56,7 +68,7 @@ export class NodeTree {
     return Array.from(this.nodes.values()) as unknown as BaseNode[];
   }
 
-  createAllElements(elements: ElementCollections) {
+  createAllElements(elements: Record<string, BaseState>) {
     Object.values(elements).forEach((elemState) => {
       // 直接使用重构后的 addNode 方法
       this.addNode(elemState);

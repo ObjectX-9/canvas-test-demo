@@ -1,5 +1,5 @@
 import { Pencil } from "./node/pencil";
-import { PencilState, PathPoint } from "../types/nodes/pencil";
+import { PencilState, PathPoint } from "../types/nodes/pencilState";
 import { nodeTree } from "./index";
 
 /**
@@ -40,6 +40,7 @@ export class PencilFactory {
     const pencilState: PencilState = {
       id: pencilId,
       type: "pencil",
+      name: "铅笔",
       x: startX,
       y: startY,
       w: 0,

@@ -1,5 +1,5 @@
 import { RenderEngine } from "../RenderEngine";
-import { Page } from "../../nodeTree/node/page";
+import { PageNode } from "../../nodeTree/node/pageNode";
 import { BaseNode } from "../../nodeTree/node/baseNode";
 import { Canvas2DGraphics } from "./Canvas2DGraphics";
 import {
@@ -58,7 +58,7 @@ export class CanvasRenderEngine extends RenderEngine {
    * @param options 渲染选项
    */
   renderCanvasPage(
-    page: Page,
+    page: PageNode,
     options: {
       renderRulers?: boolean;
       renderGrid?: boolean;

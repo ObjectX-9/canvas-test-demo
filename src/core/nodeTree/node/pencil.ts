@@ -1,4 +1,4 @@
-import { PencilState, PathPoint } from "../../types/nodes/pencil";
+import { PencilState, PathPoint } from "../../types/nodes/pencilState";
 import { BaseNode } from "./baseNode";
 
 /**

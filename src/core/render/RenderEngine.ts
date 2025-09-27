@@ -1,7 +1,7 @@
 import { BaseNode } from "../nodeTree/node/baseNode";
-import { Page } from "../nodeTree/node/page";
+import { PageNode } from "../nodeTree/node/pageNode";
 import { nodeTree } from "../nodeTree";
-import { coordinateSystemManager } from "../manage";
+import { coordinateSystemManager, viewManager } from "../manage";
 import { RenderRegistry, globalRenderRegistry } from "./RenderRegistry";
 import { INodeRenderer } from "./NodeRenderer";
 import { createBuiltinRenderers, createDefaultRenderer } from "./renderers";
@@ -11,7 +11,6 @@ import {
   IRulerRenderer,
   IBackgroundRenderer,
 } from "./interfaces/IRenderer";
-import { ViewUtils } from "../types";
 
 /**
  * 抽象渲染引擎
@@ -55,7 +54,7 @@ export class RenderEngine {
    * @param options 渲染选项
    */
   renderPage(
-    page: Page,
+    page: PageNode,
     graphics: IGraphicsAPI,
     options: {
       renderRulers?: boolean;
@@ -77,6 +76,7 @@ export class RenderEngine {
 
     const canvasSize = graphics.getCanvasSize();
     const viewState = coordinateSystemManager.getViewState();
+    console.log("✅ ~ viewState:", viewState);
 
     // 1. 清空画布
     graphics.clearRect(0, 0, canvasSize.width, canvasSize.height);
@@ -111,8 +111,8 @@ export class RenderEngine {
 
     // 5. 绘制网格
     if (renderGrid && this.gridRenderer) {
-      const translation = ViewUtils.getTranslation(viewState);
-      const scale = ViewUtils.getScale(viewState);
+      const translation = viewManager.getTranslation(viewState);
+      const scale = viewManager.getScale(viewState);
       const legacyViewState = {
         pageX: translation.pageX,
         pageY: translation.pageY,
@@ -126,7 +126,7 @@ export class RenderEngine {
       graphics,
       canvasSize,
       viewMatrix: Array.from(coordinateSystemManager.getViewTransformMatrix()),
-      scale: ViewUtils.getScale(coordinateSystemManager.getViewState()),
+      scale: viewManager.getScale(coordinateSystemManager.getViewState()),
     };
 
     // 7. 渲染页面子节点
@@ -146,8 +146,8 @@ export class RenderEngine {
 
     // 9. 绘制标尺（在最顶层，不受坐标变换影响）
     if (renderRulers && this.rulerRenderer) {
-      const translation = ViewUtils.getTranslation(viewState);
-      const scale = ViewUtils.getScale(viewState);
+      const translation = viewManager.getTranslation(viewState);
+      const scale = viewManager.getScale(viewState);
       const legacyViewState = {
         pageX: translation.pageX,
         pageY: translation.pageY,
@@ -171,7 +171,7 @@ export class RenderEngine {
       graphics,
       canvasSize: graphics.getCanvasSize(),
       viewMatrix: Array.from(coordinateSystemManager.getViewTransformMatrix()),
-      scale: ViewUtils.getScale(coordinateSystemManager.getViewState()),
+      scale: viewManager.getScale(coordinateSystemManager.getViewState()),
     };
 
     return this.registry.renderNode(node, context);
@@ -180,7 +180,7 @@ export class RenderEngine {
   /**
    * 获取页面的子节点实例
    */
-  private getPageChildNodes(page: Page): BaseNode[] {
+  private getPageChildNodes(page: PageNode): BaseNode[] {
     const nodes: BaseNode[] = [];
 
     for (const nodeId of page.children) {

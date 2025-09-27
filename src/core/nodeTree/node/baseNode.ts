@@ -19,6 +19,14 @@ export class BaseNode {
     this._state.fill = fill;
   }
 
+  get name() {
+    return this._state.name ?? "base";
+  }
+
+  set name(name: string) {
+    this._state.name = name;
+  }
+
   get type() {
     return this._state.type ?? "base";
   }

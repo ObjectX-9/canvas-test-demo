@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { coordinateSystemManager, pageManager } from "../../core/manage";
-import { ViewUtils } from "../../core/types";
+import {
+  coordinateSystemManager,
+  pageManager,
+  viewManager,
+} from "../../core/manage";
 
-import { Page } from "../../core/nodeTree/node/page";
+import { PageNode } from "../../core/nodeTree/node/pageNode";
 import { RenderLoop } from "../../core/render/RenderLoop";
 import { globalDataObserver } from "../../core/render/DataObserver";
 import { globalCanvasRenderEngine } from "../../core/render/canvas";
@@ -21,9 +24,10 @@ const CanvasContainer = () => {
   const [viewState, setViewState] = useState(
     coordinateSystemManager.getViewState()
   );
-  const [currentPage, setCurrentPage] = useState<Page | null>(
+  const [currentPage, setCurrentPage] = useState<PageNode | null>(
     pageManager.getCurrentPage()
   );
+  console.log("✅ ~ currentPage:", currentPage);
   const isDragging = useRef(false);
   const lastMousePosition = useRef({ x: 0, y: 0 });
 
@@ -31,7 +35,9 @@ const CanvasContainer = () => {
   const drawScene = useCallback(
     (_ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
       if (currentPage) {
+        // 初始化渲染引擎
         globalCanvasRenderEngine.initializeCanvas(canvas);
+
         globalCanvasRenderEngine.renderCanvasPage(currentPage, {
           renderRulers: true,
           renderGrid: true,
@@ -108,7 +114,7 @@ const CanvasContainer = () => {
     if (initialPage) {
       setCurrentPage(initialPage);
       // 同步初始页面的视图状态
-      const initialViewState = ViewUtils.create(
+      const initialViewState = viewManager.create(
         initialPage.panX,
         initialPage.panY,
         initialPage.zoom

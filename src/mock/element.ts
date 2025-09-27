@@ -1,10 +1,11 @@
-import { RectangleState } from "../core/types/nodes/rectangle";
+import { RectangleState } from "../core/types/nodes/rectangleState";
 
 // 矩形元素模拟数据 - ID与页面children字段匹配
 export const mockRectangleData: RectangleState[] = [
   {
     id: "rect_001",
     type: "rectangle",
+    name: "矩形1",
     fill: "#4CAF50",
     x: 150,
     y: 120,
@@ -16,6 +17,7 @@ export const mockRectangleData: RectangleState[] = [
   {
     id: "rect_002",
     type: "rectangle",
+    name: "矩形2",
     fill: "#2196F3",
     x: 400,
     y: 200,
@@ -23,17 +25,6 @@ export const mockRectangleData: RectangleState[] = [
     h: 150,
     radius: 16,
     rotation: 15,
-  },
-  {
-    id: "rect_003",
-    type: "rectangle",
-    fill: "#FF9800",
-    x: 200,
-    y: 150,
-    w: 250,
-    h: 120,
-    radius: 12,
-    rotation: -10,
   },
 ];
 
@@ -43,6 +34,7 @@ export const mockElementData = {
     id: "1",
     type: "rectangle",
     fill: "#ffee00",
+    name: "矩形1",
     x: 100,
     y: 100,
     w: 100,
@@ -55,6 +47,7 @@ export const mockElementData = {
     type: "rectangle",
     fill: "#ffaa00",
     x: 200,
+    name: "矩形2",
     y: 200,
     w: 100,
     h: 100,
@@ -65,6 +58,7 @@ export const mockElementData = {
     id: "3",
     type: "rectangle",
     fill: "#ff00aa",
+    name: "矩形3",
     x: 100,
     y: 200,
     w: 100,
@@ -77,15 +71,3 @@ export const mockElementData = {
 export function getBasicElement(): typeof mockElementData {
   return mockElementData;
 }
-
-// 获取矩形数据的辅助函数
-export function getMockRectangleById(id: string): RectangleState | undefined {
-  return mockRectangleData.find((rect) => rect.id === id);
-}
-
-// 获取所有矩形数据
-export function getAllMockRectangles(): RectangleState[] {
-  return mockRectangleData;
-}
-
-// 旧版本的初始化函数（已废弃，使用PageManager.initializeMockPages代替）

@@ -1,6 +1,6 @@
 import { mat3, vec2 } from "gl-matrix";
-import { ViewMatrix, ViewUtils } from "../types";
-import { viewStore } from "../store/ViewStore";
+import { ViewInfo } from "../types";
+import { viewManager } from "./ViewManager";
 
 /**
  * 坐标系统管理器
@@ -24,15 +24,15 @@ export class CoordinateSystemManager {
   /**
    * 获取当前视图状态
    */
-  getViewState(): ViewMatrix {
-    return viewStore.getView();
+  getViewState(): ViewInfo {
+    return viewManager.getViewInfo();
   }
 
   /**
    * 设置视图状态
    */
-  setViewState(view: ViewMatrix): void {
-    viewStore.setView(view);
+  setViewState(view: ViewInfo): void {
+    viewManager.setViewInfo(view);
   }
 
   /**
@@ -40,7 +40,7 @@ export class CoordinateSystemManager {
    */
   updateViewPosition(deltaX: number, deltaY: number): void {
     const currentView = this.getViewState();
-    const updatedView = ViewUtils.updateTranslation(
+    const updatedView = viewManager.updateTranslation(
       currentView,
       deltaX,
       deltaY
@@ -53,7 +53,7 @@ export class CoordinateSystemManager {
    */
   updateViewScale(scale: number, centerX?: number, centerY?: number): void {
     const currentView = this.getViewState();
-    const updatedView = ViewUtils.updateScale(
+    const updatedView = viewManager.updateScale(
       currentView,
       scale,
       centerX,
@@ -108,7 +108,7 @@ export class CoordinateSystemManager {
    * 重置视图到初始状态
    */
   resetView(): void {
-    this.setViewState(ViewUtils.reset());
+    this.setViewState(viewManager.reset());
   }
 }
 

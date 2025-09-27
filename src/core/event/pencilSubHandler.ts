@@ -2,7 +2,7 @@ import { IMouseDownSubHandler } from "./mouseDown";
 import { EventContext } from "../manage/EventManager";
 import { toolStore } from "../store/ToolStore";
 import { Pencil } from "../nodeTree/node/pencil";
-import { PencilState } from "../types/nodes/pencil";
+import { PencilState } from "../types/nodes/pencilState";
 import { nodeTree } from "../nodeTree";
 import { coordinateSystemManager, pageManager } from "../manage";
 import { globalDataObserver } from "../render";
@@ -63,6 +63,7 @@ export class PencilSubHandler implements IMouseDownSubHandler {
     const pencilState: PencilState = {
       id: this.generatePencilId(),
       type: "pencil",
+      name: "铅笔",
       x: startPoint.x,
       y: startPoint.y,
       w: 0,

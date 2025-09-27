@@ -1,4 +1,4 @@
-import { RectangleState } from "../../types/nodes/rectangle";
+import { RectangleState } from "../../types/nodes/rectangleState";
 import { BaseNode } from "./baseNode";
 
 export class Rectangle extends BaseNode {

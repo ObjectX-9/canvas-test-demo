@@ -1,6 +1,6 @@
-import { Page } from "../nodeTree/node/page";
-import { ViewMatrix } from "../types";
+import { PageNode } from "../nodeTree/node/pageNode";
 import { SelectionStore } from "../store/SelectionStore";
+import { ViewInfo } from "../types";
 import { CoordinateSystemManager } from "./CoordinateSystemManager";
 
 /**
@@ -9,13 +9,13 @@ import { CoordinateSystemManager } from "./CoordinateSystemManager";
  */
 export interface EventContext {
   canvas: HTMLCanvasElement;
-  currentPage: Page | null;
-  viewState: ViewMatrix;
+  currentPage: PageNode | null;
+  viewState: ViewInfo;
   isDragging: React.MutableRefObject<boolean>;
   lastMousePosition: React.MutableRefObject<{ x: number; y: number }>;
   selectionStore: SelectionStore;
   coordinateSystemManager: CoordinateSystemManager;
-  setViewState: (state: ViewMatrix) => void;
+  setViewState: (state: ViewInfo) => void;
 }
 
 /**
