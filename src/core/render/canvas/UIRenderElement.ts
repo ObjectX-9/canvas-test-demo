@@ -1,4 +1,5 @@
 import { RenderContext } from "./RenderElement";
+import { PageNode } from "../../nodeTree/node/pageNode";
 
 /**
  * 视图变换信息接口
@@ -436,7 +437,7 @@ export class BackgroundRenderElement extends UIRenderElement {
     this.backgroundColor = props.backgroundColor || "#ffffff";
   }
 
-  render(context: RenderContext, viewTransform?: ViewTransform): void {
+  render(context: RenderContext, _viewTransform?: ViewTransform): void {
     const { ctx, canvas } = context;
 
     console.log("🎨 渲染背景");
@@ -456,5 +457,75 @@ export class BackgroundRenderElement extends UIRenderElement {
    */
   setBackgroundColor(color: string): void {
     this.backgroundColor = color;
+  }
+}
+
+/**
+ * 页面背景渲染元素
+ * 根据当前页面渲染页面背景，层级最低
+ */
+export class PageBackgroundRenderElement extends UIRenderElement {
+  private currentPage: PageNode | null = null; // 当前页面节点
+
+  constructor(
+    props: UIRenderProps & {
+      currentPage?: PageNode | null;
+    } = {}
+  ) {
+    super(props);
+    this.currentPage = props.currentPage || null;
+  }
+
+  render(context: RenderContext, viewTransform?: ViewTransform): void {
+    if (!this.currentPage) return;
+
+    const { ctx } = context;
+
+    console.log("🎨 渲染页面背景");
+
+    ctx.save();
+
+    try {
+      // 获取视图变换信息
+      const scale = viewTransform?.scale || 1;
+      const offsetX = viewTransform?.offsetX || 0;
+      const offsetY = viewTransform?.offsetY || 0;
+
+      // 计算页面在屏幕上的位置和大小
+      const pageScreenX = this.currentPage.x * scale + offsetX;
+      const pageScreenY = this.currentPage.y * scale + offsetY;
+      const pageScreenWidth = this.currentPage.width * scale;
+      const pageScreenHeight = this.currentPage.height * scale;
+
+      // 绘制页面背景
+      ctx.fillStyle = this.currentPage.backgroundColor;
+      ctx.fillRect(pageScreenX, pageScreenY, pageScreenWidth, pageScreenHeight);
+
+      // 可选：绘制页面边框
+      ctx.strokeStyle = "#ddd";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(
+        pageScreenX,
+        pageScreenY,
+        pageScreenWidth,
+        pageScreenHeight
+      );
+    } finally {
+      ctx.restore();
+    }
+  }
+
+  /**
+   * 更新当前页面
+   */
+  setCurrentPage(page: PageNode | null): void {
+    this.currentPage = page;
+  }
+
+  /**
+   * 获取当前页面
+   */
+  getCurrentPage(): PageNode | null {
+    return this.currentPage;
   }
 }

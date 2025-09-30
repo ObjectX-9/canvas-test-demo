@@ -14,11 +14,9 @@ import {
   Canvas,
   Grid,
   Ruler,
-  Background,
   type CanvasComponentRef,
   type NodeTreeCanvasRenderer,
 } from "../../core/render";
-import { ViewInfo } from "../../core/types/view";
 
 /**
  * 画布容器
@@ -205,7 +203,7 @@ const CanvasContainer = () => {
         </div>
 
         <div style={{ fontSize: "10px", color: "#999", marginTop: "4px" }}>
-          🎯 分层架构: 背景 → 内容 → UI
+          🎯 分层架构: 页面背景 → 网格 → 标尺
         </div>
       </div>
 
@@ -223,10 +221,7 @@ const CanvasContainer = () => {
             display: "block",
           }}
         >
-          {/* 背景 */}
-          <Background visible={true} backgroundColor="#f8f9fa" zIndex={-20} />
-
-          {/* 网格 */}
+          {/* 网格层 - 中层 */}
           <Grid
             visible={showGrid}
             gridSize={20}
@@ -235,7 +230,7 @@ const CanvasContainer = () => {
             zIndex={-10}
           />
 
-          {/* 标尺 */}
+          {/* 标尺层 - 最前层 */}
           <Ruler
             visible={showRuler}
             rulerSize={25}

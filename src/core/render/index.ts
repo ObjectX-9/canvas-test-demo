@@ -32,18 +32,19 @@ export {
   GridRenderElement,
   RulerRenderElement,
   BackgroundRenderElement,
+  PageBackgroundRenderElement,
+  type UIRenderProps,
+  type ViewTransform,
 } from "./canvas/UIRenderElement";
 
 // ========== Canvas组件系统 ==========
-export { Canvas, Grid, Ruler, Background } from "./canvas/CanvasComponent";
+export {
+  Canvas,
+  Grid,
+  Ruler,
+  type CanvasComponentProps,
+  type CanvasComponentRef,
+} from "./canvas/CanvasComponent";
 
 // ========== 类型定义 ==========
 export type { RenderContext } from "./canvas/RenderElement";
-export type { UIRenderProps } from "./canvas/UIRenderElement";
-export type {
-  CanvasComponentProps,
-  CanvasComponentRef,
-  GridProps,
-  RulerProps,
-  BackgroundProps,
-} from "./canvas/CanvasComponent";

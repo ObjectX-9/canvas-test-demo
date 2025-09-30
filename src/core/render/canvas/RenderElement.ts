@@ -177,33 +177,24 @@ export class RectRenderElement extends RenderElement {
 
 /**
  * 页面渲染元素
+ * 负责渲染页面容器（不包括背景，背景由UIRenderElement处理）
  */
 export class PageRenderElement extends RenderElement {
-  constructor(node: PageNode) {
-    super(node);
+  private pageNode: PageNode;
+
+  constructor(pageNode: PageNode) {
+    super(pageNode);
+    this.pageNode = pageNode;
   }
 
   render(context: RenderContext): void {
-    const { ctx } = context;
-    const pageNode = this.node as PageNode;
+    console.log(`🎨 渲染页面容器: ${this.pageNode.name}`);
 
-    console.log(`🎨 渲染页面背景: ${pageNode.id}`, {
-      width: pageNode.width,
-      height: pageNode.height,
-      backgroundColor: pageNode.backgroundColor,
-    });
+    // 页面背景现在由UIRenderElement处理，这里不再绘制
+    // 页面元素只作为一个容器来组织子元素
 
-    ctx.save();
-
-    try {
-      // 绘制页面背景
-      ctx.fillStyle = pageNode.backgroundColor;
-      ctx.fillRect(0, 0, pageNode.width, pageNode.height);
-    } catch (error) {
-      console.error(`❌ 页面背景渲染失败: ${pageNode.id}`, error);
-    } finally {
-      ctx.restore();
-    }
+    // 可以在这里添加页面级别的其他渲染逻辑
+    // 比如页面级别的装饰、调试信息等
   }
 }
 
