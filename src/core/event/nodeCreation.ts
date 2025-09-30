@@ -3,7 +3,7 @@ import { IMouseDownSubHandler } from "./mouseDown";
 import { creationStore } from "../store/CreationStore";
 import { nodeTree } from "../nodeTree";
 import { RectangleState } from "../types/nodes/rectangleState";
-import { globalDataObserver } from "../render";
+// globalDataObserver已移除，数据变更由React状态系统处理
 import { PageNode } from "../nodeTree/node/pageNode";
 
 /**
@@ -71,8 +71,8 @@ export class NodeCreationHandler implements IMouseDownSubHandler {
     nodeTree.addNode(nodeState);
     this.addNodeToPage(nodeState.id, pageId);
 
-    // 通知渲染
-    globalDataObserver.markChanged();
+    // 数据变更由React状态系统处理
+    console.log("点击创建节点完成");
 
     console.log(`点击创建了 ${nodeType} 节点:`, nodeState);
   }
@@ -99,8 +99,8 @@ export class NodeCreationHandler implements IMouseDownSubHandler {
     nodeTree.addNode(previewNodeState);
     this.addNodeToPage(previewNodeState.id, pageId);
 
-    // 通知渲染
-    globalDataObserver.markChanged();
+    // 数据变更由React状态系统处理
+    console.log("预览节点创建完成");
 
     console.log(`开始拖拽创建 ${nodeType} 节点`);
   }
@@ -137,7 +137,8 @@ export class NodeCreationHandler implements IMouseDownSubHandler {
       previewNode.h = height;
 
       // 通知渲染
-      globalDataObserver.markChanged();
+      // 数据变更由React状态系统处理
+      console.log("矩形创建完成");
     }
   }
 
@@ -168,8 +169,8 @@ export class NodeCreationHandler implements IMouseDownSubHandler {
     this.dragStartPoint = null;
     this.previewNodeId = null;
 
-    // 通知渲染
-    globalDataObserver.markChanged();
+    // 数据变更由React状态系统处理
+    console.log("清理节点预览完成");
   }
 
   /**

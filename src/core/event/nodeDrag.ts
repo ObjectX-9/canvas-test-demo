@@ -1,7 +1,7 @@
 import { IEventHandler, EventContext } from "../manage/EventManager";
 import { nodeTree } from "../nodeTree";
 import { NodeSelectionHandler } from "./nodeSelection";
-import { globalDataObserver } from "../render";
+// globalDataObserver已移除，数据变更由React状态系统处理
 
 /**
  * 节点拖拽事件处理器
@@ -54,7 +54,8 @@ export class NodeDragHandler implements IEventHandler {
       node.y = newY;
 
       // 触发重新渲染，让节点跟随鼠标实时移动
-      globalDataObserver.markChanged();
+      // 数据变更由React状态系统处理
+      console.log("节点拖拽完成");
     }
   }
 }

@@ -1,6 +1,5 @@
 import { IEventHandler, EventContext } from "../manage/EventManager";
 import { coordinateSystemManager } from "../manage";
-import { globalDataObserver } from "../render";
 import { nodeTree } from "../nodeTree";
 import { BaseNode } from "../nodeTree/node/baseNode";
 import { PageNode } from "../nodeTree/node/pageNode";
@@ -65,8 +64,8 @@ export class MouseMoveHandler implements IEventHandler {
       currentPage.panY = translation.pageY;
     }
 
-    // 通知数据变更
-    globalDataObserver.markChanged();
+    // 数据变更通知已由React状态系统处理
+    console.log("画布拖拽完成，视图状态已更新");
 
     this.lastMousePosition = { x: event.clientX, y: event.clientY };
   }

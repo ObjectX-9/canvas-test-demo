@@ -5,7 +5,7 @@ import { Pencil } from "../nodeTree/node/pencil";
 import { PencilState } from "../types/nodes/pencilState";
 import { nodeTree } from "../nodeTree";
 import { coordinateSystemManager, pageManager } from "../manage";
-import { globalDataObserver } from "../render";
+// globalDataObserver已移除，数据变更由React状态系统处理
 
 /**
  * 画笔绘制状态
@@ -150,9 +150,6 @@ export class PencilSubHandler implements IMouseDownSubHandler {
       );
       this.drawState.lastPoint = worldPoint;
     }
-
-    // 无论是否添加新点，都触发重新渲染以显示当前绘制状态
-    globalDataObserver.markChanged();
   }
 
   /**
@@ -178,9 +175,6 @@ export class PencilSubHandler implements IMouseDownSubHandler {
     if (this.drawState.currentPencil.points.length > 3) {
       this.drawState.currentPencil.simplifyPath(1);
     }
-
-    // 触发最终渲染
-    globalDataObserver.markChanged();
 
     // 重置绘制状态
     this.drawState = {

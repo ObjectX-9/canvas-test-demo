@@ -1,4 +1,4 @@
-import { globalDataObserver } from "../render";
+// globalDataObserver已移除，数据变更由React状态系统处理
 
 /**
  * 选择状态管理器
@@ -97,7 +97,8 @@ export class SelectionStore {
     this.listeners.forEach((listener) => listener(selectedIds));
 
     // 通知渲染系统更新选中框显示
-    globalDataObserver.markChanged();
+    // 数据变更由React状态系统处理
+    console.log("选择状态已更新");
   }
 }
 

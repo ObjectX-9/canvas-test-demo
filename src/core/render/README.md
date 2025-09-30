@@ -1,180 +1,278 @@
-# 🎨 抽象渲染引擎架构
+# React 自定义渲染器
 
-这个渲染系统实现了完全抽象的图形 API，支持多渲染后端，真正做到了渲染引擎解耦。
+基于 React reconciler 的多宿主渲染器抽象设计，支持 Canvas2D、WebGL、CanvasKit 等多种渲染后端。
 
-## 🏗️ 架构设计
+## 🚀 特性
+
+- **宿主无关**：React 组件可以渲染到多种环境（Canvas、WebGL、原生等）
+- **组件化开发**：使用熟悉的 React 组件方式开发图形应用
+- **高性能更新**：利用 React reconciler 的增量更新机制
+- **类型安全**：完整的 TypeScript 类型定义
+- **易于扩展**：通过渲染器工厂支持自定义渲染后端
+
+## 📋 目录结构
 
 ```
-抽象层:          IGraphicsAPI + IRenderContext (纯接口，不绑定技术)
-              ↓
-通用渲染引擎:     RenderEngine (使用抽象接口)
-              ↓
-具体实现层:       Canvas2DGraphics, WebGLGraphics, WebGPUGraphics...
-              ↓
-专用渲染引擎:     CanvasRenderEngine, WebGLRenderEngine...
+src/core/render/
+├── interfaces/          # 核心接口定义
+│   ├── IRenderer.ts     # 渲染器统一接口
+│   └── index.ts
+├── renderers/           # 具体渲染器实现
+│   └── Canvas2DRenderer.ts  # Canvas2D 渲染器
+├── react/               # React 集成
+│   ├── HostConfig.ts    # React reconciler 配置
+│   └── ReactRenderer.ts # React 渲染器封装
+├── components/          # React 组件库
+│   └── index.tsx        # 基础 Canvas 组件
+├── factory/             # 工厂模式
+│   └── RendererFactory.ts   # 渲染器工厂
+├── examples/            # 使用示例
+│   ├── BasicExample.tsx     # 基础示例
+│   └── IntegrationExample.tsx  # 集成示例
+├── index.ts            # 主入口文件
+└── README.md           # 文档（本文件）
 ```
 
-## 🎯 核心抽象接口
+## 🛠️ 基础用法
 
-### **IGraphicsAPI** - 抽象图形 API
-
-定义所有基础绘图操作，完全不依赖具体渲染技术：
-
-- 画布操作: `clearRect`, `fillRect`, `strokeRect`
-- 路径操作: `beginPath`, `moveTo`, `lineTo`, `arc`
-- 样式设置: `setFillStyle`, `setStrokeStyle`, `setFont`
-- 变换操作: `save`, `restore`, `translate`, `rotate`, `scale`
-- 文本操作: `fillText`, `measureText`
-
-### **IRenderContext** - 抽象渲染上下文
+### 1. 创建渲染器
 
 ```typescript
-interface IRenderContext {
-  graphics: IGraphicsAPI; // 抽象图形接口
-  canvasSize: { width: number; height: number };
-  viewMatrix: number[];
-  scale: number;
+import { createCanvas2DRenderer } from "./core/render";
+
+const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
+const renderer = createCanvas2DRenderer(canvas);
+```
+
+### 2. 使用 React 组件
+
+```jsx
+import React from "react";
+import { Rect, Circle, Text, Container } from "./core/render";
+
+function App() {
+  return (
+    <Container>
+      <Rect x={10} y={10} width={100} height={50} fill="#ff6b6b" />
+      <Circle x={200} y={100} r={30} fill="#4ecdc4" />
+      <Text x={50} y={200} text="Hello Canvas!" fontSize={16} />
+    </Container>
+  );
+}
+
+// 渲染到 Canvas
+renderer.render(<App />);
+```
+
+### 3. 动态更新
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+function AnimatedApp() {
+  const [rotation, setRotation] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setRotation((r) => r + 1);
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <Container>
+      <Circle
+        x={200 + Math.sin(rotation * 0.05) * 50}
+        y={200 + Math.cos(rotation * 0.05) * 50}
+        r={20}
+        fill="#ff6b6b"
+      />
+    </Container>
+  );
 }
 ```
 
-## 🔧 具体实现
+## 🧩 核心架构
 
-### **Canvas 2D 实现**
+### 1. 渲染器抽象接口
 
 ```typescript
-// Canvas2DGraphics.ts - IGraphicsAPI的Canvas 2D实现
-export class Canvas2DGraphics implements IGraphicsAPI {
-  private ctx: CanvasRenderingContext2D;
-
-  setFillStyle(style: string): void {
-    this.ctx.fillStyle = style;
-  }
-
-  fillRect(x: number, y: number, w: number, h: number): void {
-    this.ctx.fillRect(x, y, w, h);
-  }
-  // ... 其他方法
+interface IRenderer {
+  readonly type: string;
+  createElement(type: string, props: Record<string, unknown>): RenderNode;
+  appendChild(parent: RenderNode, child: RenderNode): void;
+  removeChild(parent: RenderNode, child: RenderNode): void;
+  updateElement(instance: RenderNode, oldProps: any, newProps: any): void;
+  renderRoot(root: RenderNode, viewState?: ViewState): void;
+  clear(): void;
+  getSize(): { width: number; height: number };
 }
 ```
 
-### **WebGL 实现（未来）**
+### 2. React Reconciler 集成
 
 ```typescript
-// WebGLGraphics.ts - IGraphicsAPI的WebGL实现
-export class WebGLGraphics implements IGraphicsAPI {
-  private gl: WebGLRenderingContext;
-
-  setFillStyle(style: string): void {
-    // WebGL特定的颜色设置
-  }
-
-  fillRect(x: number, y: number, w: number, h: number): void {
-    // 使用WebGL绘制矩形
-  }
+// 创建 HostConfig
+function createHostConfig(renderer: IRenderer) {
+  return {
+    createInstance(type, props) {
+      return renderer.createElement(type, props);
+    },
+    appendChild(parent, child) {
+      renderer.appendChild(parent, child);
+    },
+    commitUpdate(instance, updatePayload, type, oldProps, newProps) {
+      renderer.updateElement(instance, oldProps, newProps);
+    },
+    // ... 其他 reconciler 方法
+  };
 }
 ```
 
-## 🎨 节点渲染器
-
-所有节点渲染器都使用抽象的`IRenderContext`：
+### 3. 多渲染器工厂
 
 ```typescript
-export class RectangleRenderer extends BaseNodeRenderer<Rectangle> {
-  renderNode(node: Rectangle, context: IRenderContext): boolean {
-    const { graphics } = context;
+import { rendererFactory } from "./core/render";
 
-    // 使用抽象API，不绑定Canvas 2D
-    graphics.setFillStyle(node.fill);
-    graphics.fillRect(0, 0, node.w, node.h);
+// 注册自定义渲染器
+rendererFactory.register("webgl", (canvas, options) => {
+  return new WebGLRenderer(canvas, options);
+});
 
-    return true;
-  }
+// 创建 WebGL 渲染器
+const webglRenderer = rendererFactory.createRenderer("webgl", canvas);
+```
+
+## 📦 可用组件
+
+### 基础几何组件
+
+- `<Rect />` - 矩形
+- `<Circle />` - 圆形
+- `<Ellipse />` - 椭圆
+- `<Line />` - 线条
+- `<Path />` - 路径
+- `<Text />` - 文本
+- `<Image />` - 图片
+
+### 容器组件
+
+- `<Container />` - 基础容器
+- `<Group />` - 分组容器
+
+### 组件属性
+
+```typescript
+interface GeometryProps {
+  x?: number; // X 坐标
+  y?: number; // Y 坐标
+  fill?: string; // 填充色
+  stroke?: string; // 描边色
+  strokeWidth?: number; // 描边宽度
+  opacity?: number; // 透明度
 }
 ```
 
-## 🚀 使用方式
+## 🔧 扩展自定义渲染器
 
-### **Canvas 2D 渲染**
+### 1. 实现渲染器接口
 
 ```typescript
-import { globalCanvasRenderEngine } from "@/core/render/canvas";
+class MyCustomRenderer implements IRenderer {
+  readonly type = "my-custom";
 
-// 初始化Canvas渲染引擎
-globalCanvasRenderEngine.initializeCanvas(canvas);
+  createElement(type: string, props: any) {
+    // 创建自定义元素
+    return { type, props, children: [] };
+  }
 
-// 渲染页面
-globalCanvasRenderEngine.renderCanvasPage(page, {
-  renderRulers: true,
-  renderGrid: true,
+  renderRoot(root: RenderNode) {
+    // 实现自定义渲染逻辑
+    this.renderNode(root);
+  }
+
+  // ... 实现其他必需方法
+}
+```
+
+### 2. 注册到工厂
+
+```typescript
+import { rendererFactory } from "./core/render";
+
+rendererFactory.register("my-custom", (canvas, options) => {
+  return new MyCustomRenderer(canvas, options);
 });
 ```
 
-### **未来的 WebGL 渲染（计划）**
+### 3. 使用自定义渲染器
 
 ```typescript
-import { globalWebGLRenderEngine } from "@/core/render/webgl";
+const renderer = rendererFactory.createRenderer("my-custom", canvas);
+const reactRenderer = new ReactRenderer(renderer);
+```
 
-// 初始化WebGL渲染引擎
-globalWebGLRenderEngine.initializeWebGL(canvas);
+## 🎯 集成到现有系统
 
-// 相同的API，不同的后端
-globalWebGLRenderEngine.renderWebGLPage(page, {
-  renderRulers: true,
-  renderGrid: true,
+### 1. 与现有 Canvas 系统集成
+
+```typescript
+import { integrateReactRenderer } from "./core/render/examples/IntegrationExample";
+
+// 集成到现有 Canvas 系统
+const reactRenderer = integrateReactRenderer(existingCanvas, {
+  viewState: currentViewState,
+  onUpdate: (renderer) => {
+    // 处理更新
+  },
 });
 ```
 
-## 🌟 架构优势
+### 2. 与坐标系统集成
 
-### **1. 完全抽象**
+```typescript
+import { coordinateSystemManager } from "../manage";
 
-- ✅ `RenderEngine` 不依赖任何具体渲染技术
-- ✅ 节点渲染器使用纯抽象接口
-- ✅ 支持无缝切换渲染后端
+const viewState = {
+  transform: coordinateSystemManager.getViewTransformMatrix(),
+  scale: coordinateSystemManager.getScale(),
+  translation: coordinateSystemManager.getTranslation(),
+};
 
-### **2. 类型安全**
+renderer.updateViewState(viewState);
+```
 
-- ✅ 所有接口都有严格的 TypeScript 类型定义
-- ✅ 编译时检查，避免运行时错误
-- ✅ 智能代码提示和重构支持
+## 🐛 调试和日志
 
-### **3. 扩展性强**
+渲染器内置了详细的日志系统：
 
-添加新渲染引擎只需：
+```
+🎨 创建Canvas2D渲染器
+🚀 开始React渲染
+🎨 创建实例: rect {x: 10, y: 10, width: 100, height: 50}
+📝 创建文本实例: Hello World
+✅ React渲染完成
+🎨 开始底层渲染
+✅ 底层渲染完成
+```
 
-1. 实现`IGraphicsAPI`接口
-2. 创建专用渲染引擎类
-3. 注册到系统中
+## ⚡ 性能优化建议
 
-### **4. 高性能**
+1. **减少虚拟节点层级**：避免过深的组件嵌套
+2. **合理使用 key 属性**：帮助 React 进行高效的 diff
+3. **避免频繁的属性更改**：使用 `useState` 和 `useMemo` 优化
+4. **分片渲染**：对大型场景进行分片处理
+5. **对象池管理**：重用渲染对象，避免频繁创建销毁
 
-- 🚀 抽象层开销极小
-- 🚀 支持硬件加速（WebGL/WebGPU）
-- 🚀 按需渲染，避免重复绘制
+## 🤝 贡献指南
 
-## 🔄 渲染流程
+1. Fork 项目
+2. 创建特性分支：`git checkout -b feature/amazing-feature`
+3. 提交改动：`git commit -m 'Add amazing feature'`
+4. 推送分支：`git push origin feature/amazing-feature`
+5. 打开 Pull Request
 
-1. **初始化**: 选择并初始化具体渲染引擎
-2. **创建上下文**: 将具体图形 API 包装为`IRenderContext`
-3. **节点渲染**: 渲染器使用抽象 API 绘制节点
-4. **输出**: 结果输出到对应的渲染目标
+## �� 许可证
 
-## 🎯 设计哲学
-
-> **"抽象胜过具体，接口胜过实现"**
-
-这个架构的核心思想是：
-
-- 🎯 **面向接口编程**: 所有核心逻辑都基于抽象接口
-- 🔌 **插件化设计**: 渲染后端可以热插拔
-- 📦 **分层架构**: 每一层都有明确的职责边界
-- 🔧 **可测试性**: 抽象接口便于单元测试和模拟
-
-这样的设计让我们能够：
-
-- 🚀 **快速适配新技术**: WebGL、WebGPU、SVG 等
-- 🧪 **轻松测试**: 模拟渲染器进行单元测试
-- 🔄 **灵活切换**: 根据性能需求选择最佳后端
-- 📈 **渐进增强**: 从 Canvas 2D 开始，逐步升级到 GPU 加速
-
-**真正实现了"写一次，到处渲染"的愿景！** ✨
+MIT License
