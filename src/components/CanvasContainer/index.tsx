@@ -9,21 +9,19 @@ import { PageNode } from "../../core/nodeTree/node/pageNode";
 import { globalEventManager, initializeEventSystem } from "../../core/event";
 import { selectionStore } from "../../core/store/SelectionStore";
 
-// 导入新的Canvas组件系统
+// 导入Skia风格的渲染器
 import {
-  Canvas,
-  Grid,
-  Ruler,
-  type CanvasComponentRef,
-  type NodeTreeCanvasRenderer,
-} from "../../core/render";
+  SkiaLikeRenderer,
+  createSkiaLikeRenderer,
+} from "../../core/render/direct/SkiaLikeRenderer";
 
 /**
  * 画布容器
- * 使用新的Canvas组件系统，支持声明式UI组件
+ * 使用Skia风格的JSX元素渲染：<canvas-grid>, <canvas-ruler>等
  */
 const CanvasContainer = () => {
-  const canvasRef = useRef<CanvasComponentRef>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rendererRef = useRef<SkiaLikeRenderer | null>(null);
   const [viewState, setViewState] = useState(
     coordinateSystemManager.getViewState()
   );
@@ -38,14 +36,29 @@ const CanvasContainer = () => {
 
   console.log("✅ ~ currentPage:", currentPage);
 
-  // 渲染器准备就绪回调
-  const handleRendererReady = useCallback(
-    (renderer: NodeTreeCanvasRenderer) => {
-      console.log("🎯 Canvas渲染器准备就绪");
+  // 渲染Skia风格UI层
+  const renderSkiaLikeUI = useCallback(() => {
+    if (rendererRef.current) {
+      rendererRef.current.render(<ckpage></ckpage>);
+    }
+  }, [showGrid, showRuler, currentPage]);
 
-      // 初始化事件系统
-      const canvas = renderer.getCanvas();
-      if (canvas) {
+  // 初始化Skia风格渲染器
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas && !rendererRef.current) {
+      try {
+        console.log("🚀 初始化SkiaLike渲染器");
+
+        const renderer = createSkiaLikeRenderer(canvas);
+        renderer.setCanvasSize(window.innerWidth, window.innerHeight);
+
+        rendererRef.current = renderer;
+
+        // 渲染Skia风格UI层
+        renderSkiaLikeUI();
+
+        // 初始化事件系统
         if (!globalEventManager.isInitialized()) {
           initializeEventSystem();
         }
@@ -60,113 +73,72 @@ const CanvasContainer = () => {
           selectionStore,
           coordinateSystemManager,
           setViewState,
-          renderer, // 传入渲染器引用
+          renderer: {
+            requestRender: () => renderer.requestRender(),
+            getCanvas: () => renderer.getCanvas(),
+          },
         };
 
-        // 设置事件上下文
         globalEventManager.setContext(eventContext);
         globalEventManager.bindCanvasEvents(canvas);
+
+        setIsInitialized(true);
+        console.log("✅ SkiaLike渲染器初始化完成");
+      } catch (error) {
+        console.error("❌ SkiaLike渲染器初始化失败:", error);
       }
-
-      setIsInitialized(true);
-    },
-    [currentPage, viewState]
-  );
-
-  // 初始化页面视图状态
-  useEffect(() => {
-    const initialPage = pageManager.getCurrentPage();
-    if (initialPage) {
-      setCurrentPage(initialPage);
-      // 同步初始页面的视图状态
-      const initialViewState = viewManager.create(
-        initialPage.panX,
-        initialPage.panY,
-        initialPage.zoom
-      );
-      coordinateSystemManager.setViewState(initialViewState);
-      setViewState(coordinateSystemManager.getViewState());
     }
   }, []);
 
-  // 当页面数据变化时，重建渲染树并重新渲染
+  // 监听UI变化
   useEffect(() => {
-    const renderer = canvasRef.current?.getRenderer();
-    if (renderer && currentPage) {
-      renderer.rebuildContentRenderTree(currentPage);
-      renderer.renderPage(currentPage, viewState);
-    }
-  }, [currentPage, viewState]);
+    renderSkiaLikeUI();
+  }, [renderSkiaLikeUI]);
 
-  // 当事件上下文变化时，更新事件绑定
-  useEffect(() => {
-    const renderer = canvasRef.current?.getRenderer();
-    if (renderer && isInitialized) {
-      const canvas = renderer.getCanvas();
-
-      // 创建事件上下文
-      const eventContext = {
-        canvas,
-        currentPage,
-        viewState,
-        isDragging,
-        lastMousePosition,
-        selectionStore,
-        coordinateSystemManager,
-        setViewState,
-        renderer, // 包含渲染器引用
-      };
-
-      // 更新事件上下文
-      globalEventManager.setContext(eventContext);
-    }
-  }, [isInitialized, viewState, currentPage]);
-
-  // 窗口大小变化时重新渲染
+  // 监听窗口大小变化
   useEffect(() => {
     const handleResize = () => {
-      canvasRef.current?.requestRender();
+      if (rendererRef.current) {
+        rendererRef.current.setCanvasSize(
+          window.innerWidth,
+          window.innerHeight
+        );
+        renderSkiaLikeUI();
+      }
     };
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [renderSkiaLikeUI]);
 
-  // 清理函数
+  // 清理
   useEffect(() => {
     return () => {
-      const renderer = canvasRef.current?.getRenderer();
-      if (renderer) {
-        const canvas = renderer.getCanvas();
-        globalEventManager.unbindCanvasEvents(canvas);
-        renderer.clear();
+      if (rendererRef.current) {
+        rendererRef.current.clear();
       }
     };
   }, []);
 
   return (
-    <div
-      className="h-full bg-gray-100 border border-gray-300"
-      style={{ position: "relative" }}
-    >
-      {/* 工具栏 */}
+    <div className="canvas-container-wrapper" style={{ position: "relative" }}>
+      {/* 工具面板 */}
       <div
         style={{
           position: "absolute",
           top: "10px",
-          right: "10px",
+          left: "10px",
           zIndex: 1000,
-          background: "rgba(255,255,255,0.9)",
-          padding: "8px",
-          borderRadius: "4px",
+          background: "rgba(255, 255, 255, 0.9)",
+          padding: "10px",
+          borderRadius: "8px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
           fontSize: "12px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "4px",
+          minWidth: "200px",
         }}
       >
         <div style={{ color: "#2ecc71", fontWeight: "bold" }}>
-          ✅ Canvas组件系统 (类似Skia)
+          ✅ 简化Skia风格Canvas (直接渲染)
         </div>
         <div style={{ fontSize: "10px", color: "#666" }}>
           页面: {currentPage?.name || "无"} (
@@ -183,8 +155,6 @@ const CanvasContainer = () => {
               </div>
             );
           })()}
-
-        {/* UI控制按钮 */}
         <div style={{ fontSize: "10px", marginTop: "4px" }}>
           <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
             <input
@@ -203,48 +173,27 @@ const CanvasContainer = () => {
             显示标尺
           </label>
         </div>
-
         <div style={{ fontSize: "10px", color: "#999", marginTop: "4px" }}>
-          🎯 分层架构: 页面背景 → 网格 → 标尺
+          🎯 无中间层，直接Canvas渲染
         </div>
       </div>
 
-      {/* Canvas组件区域 */}
+      {/* Canvas区域 */}
       <div style={{ height: "100%", position: "relative" }}>
-        <Canvas
+        <canvas
           ref={canvasRef}
           width={window.innerWidth}
           height={window.innerHeight}
-          currentPage={currentPage}
-          viewState={viewState}
-          onRendererReady={handleRendererReady}
           style={{
             cursor: isDragging.current ? "grabbing" : "grab",
             display: "block",
+            width: `${window.innerWidth}px`,
+            height: `${window.innerHeight}px`,
           }}
-        >
-          {/* 网格层 - 中层 */}
-          <Grid
-            visible={showGrid}
-            gridSize={20}
-            strokeStyle="#e0e0e0"
-            lineWidth={1}
-            zIndex={-10}
-          />
-
-          {/* 标尺层 - 最前层 */}
-          <Ruler
-            visible={showRuler}
-            rulerSize={25}
-            backgroundColor="#f0f0f0"
-            textColor="#333"
-            strokeStyle="#ccc"
-            zIndex={10}
-          />
-        </Canvas>
+        />
       </div>
 
-      {/* 加载提示 */}
+      {/* Loading指示器 */}
       {!isInitialized && (
         <div
           style={{
@@ -252,15 +201,14 @@ const CanvasContainer = () => {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            background: "rgba(52, 73, 94, 0.8)",
+            background: "rgba(0,0,0,0.8)",
             color: "white",
             padding: "20px",
             borderRadius: "8px",
-            fontSize: "16px",
-            textAlign: "center",
+            fontSize: "14px",
           }}
         >
-          🚀 正在初始化Canvas组件系统...
+          🚀 正在初始化简化渲染器...
         </div>
       )}
     </div>
