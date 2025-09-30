@@ -25,7 +25,7 @@ export class NodeDragHandler implements IEventHandler {
 
   handle(event: Event, context: EventContext): void {
     const mouseEvent = event as MouseEvent;
-    const { canvas, coordinateSystemManager } = context;
+    const { canvas, coordinateSystemManager, renderer } = context;
 
     if (!this.nodeSelectionHandler.isDragging()) return;
 
@@ -53,9 +53,14 @@ export class NodeDragHandler implements IEventHandler {
       node.x = newX;
       node.y = newY;
 
-      // 触发重新渲染，让节点跟随鼠标实时移动
-      // 数据变更由React状态系统处理
-      console.log("节点拖拽完成");
+      // 🚀 立即触发渲染，实现流畅拖拽
+      renderer.requestRender();
+
+      console.log(
+        `🎯 节点拖拽更新: ${node.id} -> (${newX.toFixed(1)}, ${newY.toFixed(
+          1
+        )})`
+      );
     }
   }
 }
@@ -80,10 +85,17 @@ export class NodeDragEndHandler implements IEventHandler {
   }
 
   handle(_event: Event, context: EventContext): void {
+    const { renderer } = context;
+
     // 停止拖拽
     this.nodeSelectionHandler.stopDragging();
 
     // 重置视图拖拽状态
     context.isDragging.current = false;
+
+    // 🔄 最终渲染，确保状态同步
+    renderer.requestRender();
+
+    console.log("🏁 节点拖拽结束，最终渲染完成");
   }
 }

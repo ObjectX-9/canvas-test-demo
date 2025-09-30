@@ -60,6 +60,7 @@ const CanvasContainer = () => {
           selectionStore,
           coordinateSystemManager,
           setViewState,
+          renderer, // 传入渲染器引用
         };
 
         // 设置事件上下文
@@ -113,6 +114,7 @@ const CanvasContainer = () => {
         selectionStore,
         coordinateSystemManager,
         setViewState,
+        renderer, // 包含渲染器引用
       };
 
       // 更新事件上下文

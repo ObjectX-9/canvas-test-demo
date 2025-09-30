@@ -2,6 +2,7 @@ import { PageNode } from "../nodeTree/node/pageNode";
 import { SelectionStore } from "../store/SelectionStore";
 import { ViewInfo } from "../types";
 import { CoordinateSystemManager } from "./CoordinateSystemManager";
+import { NodeTreeCanvasRenderer } from "../render/canvas/NodeTreeCanvasRenderer";
 
 /**
  * 事件上下文接口
@@ -16,6 +17,7 @@ export interface EventContext {
   selectionStore: SelectionStore;
   coordinateSystemManager: CoordinateSystemManager;
   setViewState: (state: ViewInfo) => void;
+  renderer: NodeTreeCanvasRenderer; // 新增：渲染器引用
 }
 
 /**

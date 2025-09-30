@@ -154,9 +154,10 @@ export class NodeTreeCanvasRenderer {
   }
 
   /**
-   * 请求渲染（防抖）
+   * 请求渲染（公有方法，供事件处理器调用）
+   * 使用requestAnimationFrame进行渲染调度，避免重复渲染
    */
-  private requestRender(viewState?: ViewInfo): void {
+  public requestRender(viewState?: ViewInfo): void {
     if (this.isRenderRequested) {
       return;
     }
