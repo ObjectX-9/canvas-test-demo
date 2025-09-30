@@ -190,8 +190,8 @@ export class NodeTreeCanvasRenderer {
     };
 
     try {
-      // === 第一层：UI背景层（不受视图变换影响） ===
-      this.renderUIBackground(renderContext);
+      // === 第一层：UI背景层（不受视图变换影响，但知道视图状态） ===
+      this.renderUIBackground(renderContext, viewState);
 
       // === 第二层：内容层（受视图变换影响） ===
       if (this.contentRenderRoot) {
@@ -201,8 +201,8 @@ export class NodeTreeCanvasRenderer {
         this.ctx.restore();
       }
 
-      // === 第三层：UI前景层（不受视图变换影响） ===
-      this.renderUIForeground(renderContext);
+      // === 第三层：UI前景层（不受视图变换影响，但知道视图状态） ===
+      this.renderUIForeground(renderContext, viewState);
 
       console.log("✅ 分层渲染循环完成");
     } catch (error) {
@@ -213,31 +213,65 @@ export class NodeTreeCanvasRenderer {
   /**
    * 渲染UI背景层（网格等）
    */
-  private renderUIBackground(context: RenderContext): void {
+  private renderUIBackground(
+    context: RenderContext,
+    viewState?: ViewInfo
+  ): void {
     if (!this.uiRenderRoot) return;
+
+    // 计算视图变换信息
+    const viewTransform = this.calculateViewTransform(viewState);
 
     // 渲染zIndex < 0的UI元素（背景层）
     this.uiRenderRoot
       .getChildren()
       .filter((child) => (child.getProps().zIndex || 0) < 0)
       .forEach((child) => {
-        child.renderTree(context);
+        child.renderTree(context, viewTransform);
       });
   }
 
   /**
    * 渲染UI前景层（标尺、工具等）
    */
-  private renderUIForeground(context: RenderContext): void {
+  private renderUIForeground(
+    context: RenderContext,
+    viewState?: ViewInfo
+  ): void {
     if (!this.uiRenderRoot) return;
+
+    // 计算视图变换信息
+    const viewTransform = this.calculateViewTransform(viewState);
 
     // 渲染zIndex >= 0的UI元素（前景层）
     this.uiRenderRoot
       .getChildren()
       .filter((child) => (child.getProps().zIndex || 0) >= 0)
       .forEach((child) => {
-        child.renderTree(context);
+        child.renderTree(context, viewTransform);
       });
+  }
+
+  /**
+   * 计算视图变换信息（统一计算，避免UI元素重复计算）
+   */
+  private calculateViewTransform(viewState?: ViewInfo) {
+    if (!viewState) {
+      return {
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+      };
+    }
+
+    const scale = viewManager.getScale(viewState);
+    const translation = viewManager.getTranslation(viewState);
+
+    return {
+      scale,
+      offsetX: translation.pageX,
+      offsetY: translation.pageY,
+    };
   }
 
   /**

@@ -3,6 +3,7 @@ import React, {
   useRef,
   useImperativeHandle,
   forwardRef,
+  useCallback,
 } from "react";
 import { NodeTreeCanvasRenderer } from "./NodeTreeCanvasRenderer";
 import {

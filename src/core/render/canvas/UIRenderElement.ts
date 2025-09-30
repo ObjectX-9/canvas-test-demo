@@ -1,6 +1,15 @@
 import { RenderContext } from "./RenderElement";
 
 /**
+ * 视图变换信息接口
+ */
+export interface ViewTransform {
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+/**
  * UI渲染元素接口
  * 定义UI辅助元素的基本属性
  */
@@ -13,11 +22,13 @@ export interface UIRenderProps {
 /**
  * UI渲染元素基类
  * 用于渲染标尺、网格、选择框等不属于用户设计内容的UI元素
+ * 统一支持视图变换，外层计算好变换信息，内部只负责渲染
  */
 export abstract class UIRenderElement {
   protected props: UIRenderProps;
   protected children: UIRenderElement[] = [];
   protected parent: UIRenderElement | null = null;
+  protected viewTransform?: ViewTransform; // 统一的视图变换信息
 
   constructor(props: UIRenderProps = {}) {
     this.props = {
@@ -30,8 +41,24 @@ export abstract class UIRenderElement {
 
   /**
    * 渲染方法 - 子类必须实现
+   * @param context 渲染上下文
+   * @param viewTransform 视图变换信息（由外层计算传入）
    */
-  abstract render(context: RenderContext): void;
+  abstract render(context: RenderContext, viewTransform?: ViewTransform): void;
+
+  /**
+   * 设置视图变换信息（统一接口）
+   */
+  setViewTransform(viewTransform: ViewTransform): void {
+    this.viewTransform = viewTransform;
+  }
+
+  /**
+   * 获取视图变换信息
+   */
+  getViewTransform(): ViewTransform | undefined {
+    return this.viewTransform;
+  }
 
   /**
    * 更新属性
@@ -70,8 +97,10 @@ export abstract class UIRenderElement {
 
   /**
    * 渲染自身和所有子元素
+   * @param context 渲染上下文
+   * @param viewTransform 视图变换信息（从外层传递）
    */
-  renderTree(context: RenderContext): void {
+  renderTree(context: RenderContext, viewTransform?: ViewTransform): void {
     if (!this.props.visible) return;
 
     const { ctx } = context;
@@ -85,12 +114,15 @@ export abstract class UIRenderElement {
         ctx.globalAlpha = this.props.opacity;
       }
 
-      // 渲染自身
-      this.render(context);
+      // 如果有传入的视图变换，使用传入的；否则使用自身保存的
+      const currentViewTransform = viewTransform || this.viewTransform;
 
-      // 渲染子元素
+      // 渲染自身
+      this.render(context, currentViewTransform);
+
+      // 渲染子元素（传递相同的视图变换）
       this.children.forEach((child) => {
-        child.renderTree(context);
+        child.renderTree(context, currentViewTransform);
       });
     } finally {
       // 恢复上下文状态
@@ -122,6 +154,7 @@ export abstract class UIRenderElement {
 
 /**
  * 网格渲染元素
+ * 支持根据视图变换调整网格显示
  */
 export class GridRenderElement extends UIRenderElement {
   private gridSize: number;
@@ -141,26 +174,46 @@ export class GridRenderElement extends UIRenderElement {
     this.lineWidth = props.lineWidth || 1;
   }
 
-  render(context: RenderContext): void {
+  render(context: RenderContext, viewTransform?: ViewTransform): void {
     const { ctx, canvas } = context;
 
-    console.log("🎨 渲染网格");
+    console.log("🎨 渲染动态网格");
 
     ctx.save();
 
     try {
       ctx.strokeStyle = this.strokeStyle;
       ctx.lineWidth = this.lineWidth;
+
+      // 获取视图变换信息
+      const scale = viewTransform?.scale || 1;
+      const offsetX = viewTransform?.offsetX || 0;
+      const offsetY = viewTransform?.offsetY || 0;
+
+      // 根据缩放调整网格大小
+      const scaledGridSize = this.gridSize * scale;
+
+      // 如果网格太小或太大，就不绘制
+      if (scaledGridSize < 5 || scaledGridSize > 200) {
+        return;
+      }
+
+      // 计算起始绘制位置，确保网格对齐
+      const startX =
+        ((offsetX % scaledGridSize) + scaledGridSize) % scaledGridSize;
+      const startY =
+        ((offsetY % scaledGridSize) + scaledGridSize) % scaledGridSize;
+
       ctx.beginPath();
 
       // 绘制垂直线
-      for (let x = 0; x <= canvas.width; x += this.gridSize) {
+      for (let x = startX; x <= canvas.width; x += scaledGridSize) {
         ctx.moveTo(x, 0);
         ctx.lineTo(x, canvas.height);
       }
 
       // 绘制水平线
-      for (let y = 0; y <= canvas.height; y += this.gridSize) {
+      for (let y = startY; y <= canvas.height; y += scaledGridSize) {
         ctx.moveTo(0, y);
         ctx.lineTo(canvas.width, y);
       }
@@ -189,6 +242,7 @@ export class GridRenderElement extends UIRenderElement {
 
 /**
  * 标尺渲染元素
+ * 根据视图变换动态显示刻度和原点
  */
 export class RulerRenderElement extends UIRenderElement {
   private rulerSize: number;
@@ -211,10 +265,10 @@ export class RulerRenderElement extends UIRenderElement {
     this.strokeStyle = props.strokeStyle || "#ccc";
   }
 
-  render(context: RenderContext): void {
+  render(context: RenderContext, viewTransform?: ViewTransform): void {
     const { ctx, canvas } = context;
 
-    console.log("📏 渲染标尺");
+    console.log("📏 渲染动态标尺");
 
     ctx.save();
 
@@ -228,8 +282,8 @@ export class RulerRenderElement extends UIRenderElement {
       // 垂直标尺
       ctx.fillRect(0, 0, this.rulerSize, canvas.height);
 
-      // 绘制标尺刻度
-      this.drawRulerTicks(ctx, canvas);
+      // 绘制标尺刻度（使用传入的视图变换）
+      this.drawRulerTicks(ctx, canvas, viewTransform);
 
       // 绘制标尺边框
       ctx.strokeStyle = this.strokeStyle;
@@ -247,61 +301,128 @@ export class RulerRenderElement extends UIRenderElement {
 
   private drawRulerTicks(
     ctx: CanvasRenderingContext2D,
-    canvas: HTMLCanvasElement
+    canvas: HTMLCanvasElement,
+    viewTransform?: ViewTransform
   ): void {
     ctx.fillStyle = this.textColor;
     ctx.font = "10px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    const tickInterval = 50; // 主刻度间距
-    const minorTickInterval = 10; // 次刻度间距
+    // 获取视图变换信息
+    const scale = viewTransform?.scale || 1;
+    const offsetX = viewTransform?.offsetX || 0;
+    const offsetY = viewTransform?.offsetY || 0;
+
+    // 根据缩放调整刻度间距
+    let tickInterval = 50;
+    let minorTickInterval = 10;
+
+    if (scale < 0.5) {
+      tickInterval = 100;
+      minorTickInterval = 20;
+    } else if (scale > 2) {
+      tickInterval = 25;
+      minorTickInterval = 5;
+    }
+
+    // 计算可视区域的世界坐标范围
+    const worldStartX = -offsetX / scale;
+    const worldEndX = (canvas.width - offsetX) / scale;
+    const worldStartY = -offsetY / scale;
+    const worldEndY = (canvas.height - offsetY) / scale;
 
     // 绘制水平标尺刻度
-    for (let x = 0; x <= canvas.width; x += minorTickInterval) {
-      const isMajorTick = x % tickInterval === 0;
-      const tickHeight = isMajorTick ? 8 : 4;
+    const startTickX =
+      Math.floor(worldStartX / minorTickInterval) * minorTickInterval;
+    const endTickX =
+      Math.ceil(worldEndX / minorTickInterval) * minorTickInterval;
 
-      ctx.beginPath();
-      ctx.moveTo(x, this.rulerSize - tickHeight);
-      ctx.lineTo(x, this.rulerSize);
-      ctx.strokeStyle = this.textColor;
-      ctx.lineWidth = 1;
-      ctx.stroke();
+    for (
+      let worldX = startTickX;
+      worldX <= endTickX;
+      worldX += minorTickInterval
+    ) {
+      // 转换为屏幕坐标
+      const screenX = worldX * scale + offsetX;
 
-      // 绘制数字标签
-      if (isMajorTick && x > 0) {
-        ctx.fillText(x.toString(), x, this.rulerSize / 2);
+      if (screenX >= this.rulerSize && screenX <= canvas.width) {
+        const isMajorTick = worldX % tickInterval === 0;
+        const tickHeight = isMajorTick ? 8 : 4;
+
+        ctx.beginPath();
+        ctx.moveTo(screenX, this.rulerSize - tickHeight);
+        ctx.lineTo(screenX, this.rulerSize);
+        ctx.strokeStyle = this.textColor;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 绘制数字标签
+        if (isMajorTick && Math.abs(worldX) > 0.1) {
+          ctx.fillText(
+            Math.round(worldX).toString(),
+            screenX,
+            this.rulerSize / 2
+          );
+        }
       }
     }
 
     // 绘制垂直标尺刻度
-    ctx.textAlign = "center";
-    for (let y = 0; y <= canvas.height; y += minorTickInterval) {
-      const isMajorTick = y % tickInterval === 0;
-      const tickWidth = isMajorTick ? 8 : 4;
+    const startTickY =
+      Math.floor(worldStartY / minorTickInterval) * minorTickInterval;
+    const endTickY =
+      Math.ceil(worldEndY / minorTickInterval) * minorTickInterval;
 
-      ctx.beginPath();
-      ctx.moveTo(this.rulerSize - tickWidth, y);
-      ctx.lineTo(this.rulerSize, y);
-      ctx.strokeStyle = this.textColor;
-      ctx.lineWidth = 1;
-      ctx.stroke();
+    for (
+      let worldY = startTickY;
+      worldY <= endTickY;
+      worldY += minorTickInterval
+    ) {
+      // 转换为屏幕坐标
+      const screenY = worldY * scale + offsetY;
 
-      // 绘制数字标签（旋转）
-      if (isMajorTick && y > 0) {
-        ctx.save();
-        ctx.translate(this.rulerSize / 2, y);
-        ctx.rotate(-Math.PI / 2);
-        ctx.fillText(y.toString(), 0, 0);
-        ctx.restore();
+      if (screenY >= this.rulerSize && screenY <= canvas.height) {
+        const isMajorTick = worldY % tickInterval === 0;
+        const tickWidth = isMajorTick ? 8 : 4;
+
+        ctx.beginPath();
+        ctx.moveTo(this.rulerSize - tickWidth, screenY);
+        ctx.lineTo(this.rulerSize, screenY);
+        ctx.strokeStyle = this.textColor;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 绘制数字标签（旋转）
+        if (isMajorTick && Math.abs(worldY) > 0.1) {
+          ctx.save();
+          ctx.translate(this.rulerSize / 2, screenY);
+          ctx.rotate(-Math.PI / 2);
+          ctx.fillText(Math.round(worldY).toString(), 0, 0);
+          ctx.restore();
+        }
       }
+    }
+
+    // 绘制原点标记
+    const originScreenX = 0 * scale + offsetX;
+    const originScreenY = 0 * scale + offsetY;
+
+    if (originScreenX >= this.rulerSize && originScreenX <= canvas.width) {
+      ctx.fillStyle = "#ff0000";
+      ctx.fillRect(originScreenX - 1, 0, 2, this.rulerSize);
+    }
+
+    if (originScreenY >= this.rulerSize && originScreenY <= canvas.height) {
+      ctx.fillStyle = "#ff0000";
+      ctx.fillRect(0, originScreenY - 1, this.rulerSize, 2);
     }
   }
 }
 
 /**
  * 背景渲染元素
+ * 通常不受视图变换影响，但保持接口统一
  */
 export class BackgroundRenderElement extends UIRenderElement {
   private backgroundColor: string;
@@ -315,7 +436,7 @@ export class BackgroundRenderElement extends UIRenderElement {
     this.backgroundColor = props.backgroundColor || "#ffffff";
   }
 
-  render(context: RenderContext): void {
+  render(context: RenderContext, viewTransform?: ViewTransform): void {
     const { ctx, canvas } = context;
 
     console.log("🎨 渲染背景");

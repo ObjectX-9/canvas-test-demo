@@ -99,6 +99,29 @@ const CanvasContainer = () => {
     }
   }, [currentPage, viewState]);
 
+  // 当事件上下文变化时，更新事件绑定
+  useEffect(() => {
+    const renderer = canvasRef.current?.getRenderer();
+    if (renderer && isInitialized) {
+      const canvas = renderer.getCanvas();
+
+      // 创建事件上下文
+      const eventContext = {
+        canvas,
+        currentPage,
+        viewState,
+        isDragging,
+        lastMousePosition,
+        selectionStore,
+        coordinateSystemManager,
+        setViewState,
+      };
+
+      // 更新事件上下文
+      globalEventManager.setContext(eventContext);
+    }
+  }, [isInitialized, viewState, currentPage]);
+
   // 窗口大小变化时重新渲染
   useEffect(() => {
     const handleResize = () => {
