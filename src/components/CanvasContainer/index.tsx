@@ -9,216 +9,73 @@ import { PageNode } from "../../core/nodeTree/node/pageNode";
 import { globalEventManager, initializeEventSystem } from "../../core/event";
 import { selectionStore } from "../../core/store/SelectionStore";
 
-// 导入新的React自定义渲染器
+// 导入新的Canvas组件系统
 import {
-  createCanvas2DRenderer,
-  Rect,
-  Circle,
-  Text,
-  Container,
+  Canvas,
+  Grid,
+  Ruler,
+  Background,
+  type CanvasComponentRef,
+  type NodeTreeCanvasRenderer,
 } from "../../core/render";
-import type { ReactRenderer } from "../../core/render/react/ReactRenderer";
-import React from "react";
-
-let reactRenderer: ReactRenderer | null = null;
-
-// 导入ViewInfo类型
 import { ViewInfo } from "../../core/types/view";
-
-// React Canvas场景组件
-const CanvasScene: React.FC<{
-  viewState?: ViewInfo;
-  currentPage?: PageNode | null;
-}> = ({ viewState, currentPage }) => {
-  const [time, setTime] = useState(0);
-
-  // 简单的动画效果
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTime((t) => t + 0.05);
-    }, 16);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  // 动态位置计算
-  const rect1X = 100 + Math.sin(time) * 50;
-  const rect2X = 300 + Math.cos(time * 1.2) * 30;
-  const rect1Color = `hsl(${(time * 30) % 360}, 70%, 60%)`;
-  const rect2Color = `hsl(${(time * 50 + 120) % 360}, 70%, 60%)`;
-
-  return (
-    <Container>
-      {/* 背景 */}
-      <Rect
-        x={0}
-        y={0}
-        width={window.innerWidth}
-        height={window.innerHeight}
-        fill="#f8f9fa"
-      />
-
-      {/* 标题 */}
-      <Text
-        x={window.innerWidth / 2}
-        y={50}
-        text="React 自定义渲染器 + 现有系统集成"
-        fontSize={24}
-        fontFamily="Arial"
-        fill="#2c3e50"
-        textAlign="center"
-      />
-
-      {/* 第一个矩形 - 动态位置和颜色 */}
-      <Rect
-        x={rect1X}
-        y={150}
-        width={120}
-        height={80}
-        fill={rect1Color}
-        stroke="#2c3e50"
-        strokeWidth={2}
-      />
-
-      {/* 第二个矩形 - 动态位置和颜色 */}
-      <Rect
-        x={rect2X}
-        y={300}
-        width={100}
-        height={100}
-        fill={rect2Color}
-        stroke="#34495e"
-        strokeWidth={3}
-      />
-
-      {/* 装饰圆形 */}
-      <Circle
-        x={200}
-        y={450}
-        r={25}
-        fill="#e74c3c"
-        stroke="#c0392b"
-        strokeWidth={2}
-      />
-
-      {/* 系统信息显示 */}
-      {viewState && (
-        <Text
-          x={20}
-          y={30}
-          text={`视图状态: 已加载 | 页面: ${currentPage?.name || "无"}`}
-          fontSize={14}
-          fill="#7f8c8d"
-        />
-      )}
-
-      {/* 动态信息 */}
-      <Text
-        x={20}
-        y={window.innerHeight - 30}
-        text={`React渲染器集成成功 | 时间: ${time.toFixed(1)}s`}
-        fontSize={12}
-        fill="#95a5a6"
-      />
-    </Container>
-  );
-};
 
 /**
  * 画布容器
- * 负责初始化画布、事件系统
- * 现已完全使用React自定义渲染器
+ * 使用新的Canvas组件系统，支持声明式UI组件
  */
 const CanvasContainer = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<CanvasComponentRef>(null);
   const [viewState, setViewState] = useState(
     coordinateSystemManager.getViewState()
   );
   const [currentPage, setCurrentPage] = useState<PageNode | null>(
     pageManager.getCurrentPage()
   );
-  console.log("✅ ~ currentPage:", currentPage);
   const isDragging = useRef(false);
   const lastMousePosition = useRef({ x: 0, y: 0 });
   const [isInitialized, setIsInitialized] = useState(false);
+  const [showGrid, setShowGrid] = useState(true);
+  const [showRuler, setShowRuler] = useState(true);
 
-  // React渲染器渲染函数
-  const renderReactScene = useCallback(() => {
-    if (reactRenderer) {
-      try {
-        console.log("🎨 使用React渲染器渲染场景");
+  console.log("✅ ~ currentPage:", currentPage);
 
-        // 渲染React场景
-        reactRenderer.render(
-          <CanvasScene viewState={viewState} currentPage={currentPage} />
-        );
+  // 渲染器准备就绪回调
+  const handleRendererReady = useCallback(
+    (renderer: NodeTreeCanvasRenderer) => {
+      console.log("🎯 Canvas渲染器准备就绪");
 
-        console.log("✅ React渲染器渲染完成");
-      } catch (error) {
-        console.error("❌ React渲染器渲染失败:", error);
-      }
-    }
-  }, [viewState, currentPage]);
+      // 初始化事件系统
+      const canvas = renderer.getCanvas();
+      if (canvas) {
+        if (!globalEventManager.isInitialized()) {
+          initializeEventSystem();
+        }
 
-  // 初始化React渲染器
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas && !reactRenderer) {
-      try {
-        console.log("🚀 初始化React Canvas渲染器");
+        // 创建事件上下文
+        const eventContext = {
+          canvas,
+          currentPage,
+          viewState,
+          isDragging,
+          lastMousePosition,
+          selectionStore,
+          coordinateSystemManager,
+          setViewState,
+        };
 
-        reactRenderer = createCanvas2DRenderer(canvas);
-
-        // 渲染初始场景
-        reactRenderer.render(
-          <CanvasScene viewState={viewState} currentPage={currentPage} />
-        );
-
-        setIsInitialized(true);
-        console.log("✅ React Canvas渲染器初始化完成");
-      } catch (error) {
-        console.error("❌ React Canvas渲染器初始化失败:", error);
-      }
-    }
-  }, [viewState, currentPage]);
-
-  // Canvas事件监听器
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas && isInitialized) {
-      // 初始化事件系统（只在首次渲染时）
-      if (!globalEventManager.isInitialized()) {
-        initializeEventSystem();
+        // 设置事件上下文
+        globalEventManager.setContext(eventContext);
+        globalEventManager.bindCanvasEvents(canvas);
       }
 
-      // 创建事件上下文
-      const eventContext = {
-        canvas,
-        currentPage,
-        viewState,
-        isDragging,
-        lastMousePosition,
-        selectionStore,
-        coordinateSystemManager,
-        setViewState,
-      };
-
-      // 设置事件上下文
-      globalEventManager.setContext(eventContext);
-
-      // 绑定画布事件
-      globalEventManager.bindCanvasEvents(canvas);
-
-      return () => {
-        // 解绑画布事件
-        globalEventManager.unbindCanvasEvents(canvas);
-      };
-    }
-  }, [isInitialized, viewState, currentPage]);
+      setIsInitialized(true);
+    },
+    [currentPage, viewState]
+  );
 
   // 初始化页面视图状态
   useEffect(() => {
-    // 页面和子节点数据在PageManager中自动初始化
     const initialPage = pageManager.getCurrentPage();
     if (initialPage) {
       setCurrentPage(initialPage);
@@ -233,19 +90,33 @@ const CanvasContainer = () => {
     }
   }, []);
 
-  // 当数据变更时重新渲染
+  // 当页面数据变化时，重建渲染树并重新渲染
   useEffect(() => {
-    if (isInitialized) {
-      renderReactScene();
+    const renderer = canvasRef.current?.getRenderer();
+    if (renderer && currentPage) {
+      renderer.rebuildContentRenderTree(currentPage);
+      renderer.renderPage(currentPage, viewState);
     }
-  }, [viewState, currentPage, isInitialized, renderReactScene]);
+  }, [currentPage, viewState]);
+
+  // 窗口大小变化时重新渲染
+  useEffect(() => {
+    const handleResize = () => {
+      canvasRef.current?.requestRender();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // 清理函数
   useEffect(() => {
     return () => {
-      if (reactRenderer) {
-        reactRenderer.unmount();
-        reactRenderer = null;
+      const renderer = canvasRef.current?.getRenderer();
+      if (renderer) {
+        const canvas = renderer.getCanvas();
+        globalEventManager.unbindCanvasEvents(canvas);
+        renderer.clear();
       }
     };
   }, []);
@@ -255,7 +126,7 @@ const CanvasContainer = () => {
       className="h-full bg-gray-100 border border-gray-300"
       style={{ position: "relative" }}
     >
-      {/* 状态信息面板 */}
+      {/* 工具栏 */}
       <div
         style={{
           position: "absolute",
@@ -266,28 +137,91 @@ const CanvasContainer = () => {
           padding: "8px",
           borderRadius: "4px",
           fontSize: "12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "4px",
         }}
       >
         <div style={{ color: "#2ecc71", fontWeight: "bold" }}>
-          ✅ React自定义渲染器
-        </div>
-        <div style={{ fontSize: "10px", color: "#666", marginTop: "2px" }}>
-          状态: {isInitialized ? "已初始化" : "初始化中..."}
+          ✅ Canvas组件系统 (类似Skia)
         </div>
         <div style={{ fontSize: "10px", color: "#666" }}>
-          页面: {currentPage?.name || "无"}
+          页面: {currentPage?.name || "无"} (
+          {currentPage?.children?.length || 0} 个子节点)
+        </div>
+        {viewState &&
+          (() => {
+            const scale = viewManager.getScale(viewState);
+            const translation = viewManager.getTranslation(viewState);
+            return (
+              <div style={{ fontSize: "10px", color: "#666" }}>
+                视图: 缩放 {scale.toFixed(2)} | 位移 (
+                {translation.pageX.toFixed(0)}, {translation.pageY.toFixed(0)})
+              </div>
+            );
+          })()}
+
+        {/* UI控制按钮 */}
+        <div style={{ fontSize: "10px", marginTop: "4px" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <input
+              type="checkbox"
+              checked={showGrid}
+              onChange={(e) => setShowGrid(e.target.checked)}
+            />
+            显示网格
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <input
+              type="checkbox"
+              checked={showRuler}
+              onChange={(e) => setShowRuler(e.target.checked)}
+            />
+            显示标尺
+          </label>
+        </div>
+
+        <div style={{ fontSize: "10px", color: "#999", marginTop: "4px" }}>
+          🎯 分层架构: 背景 → 内容 → UI
         </div>
       </div>
 
-      {/* 画布区域 */}
+      {/* Canvas组件区域 */}
       <div style={{ height: "100%", position: "relative" }}>
-        <canvas
+        <Canvas
           ref={canvasRef}
-          id="canvasContainer"
-          height={window.innerHeight}
           width={window.innerWidth}
-          style={{ cursor: isDragging.current ? "grabbing" : "grab" }}
-        ></canvas>
+          height={window.innerHeight}
+          currentPage={currentPage}
+          viewState={viewState}
+          onRendererReady={handleRendererReady}
+          style={{
+            cursor: isDragging.current ? "grabbing" : "grab",
+            display: "block",
+          }}
+        >
+          {/* 背景 */}
+          <Background visible={true} backgroundColor="#f8f9fa" zIndex={-20} />
+
+          {/* 网格 */}
+          <Grid
+            visible={showGrid}
+            gridSize={20}
+            strokeStyle="#e0e0e0"
+            lineWidth={1}
+            zIndex={-10}
+          />
+
+          {/* 标尺 */}
+          <Ruler
+            visible={showRuler}
+            rulerSize={25}
+            backgroundColor="#f0f0f0"
+            textColor="#333"
+            strokeStyle="#ccc"
+            zIndex={10}
+          />
+        </Canvas>
       </div>
 
       {/* 加载提示 */}
@@ -306,7 +240,7 @@ const CanvasContainer = () => {
             textAlign: "center",
           }}
         >
-          🚀 正在初始化React Canvas渲染器...
+          🚀 正在初始化Canvas组件系统...
         </div>
       )}
     </div>

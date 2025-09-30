@@ -1,74 +1,49 @@
 /**
- * React自定义渲染器模块
+ * 节点树Canvas渲染器模块
  *
- * 本模块实现了基于React reconciler的多宿主渲染器抽象设计
- * 支持Canvas2D、WebGL、CanvasKit等多种渲染后端
+ * 基于Skia架构思路的双层渲染系统：
+ * - 数据层 (BaseNode): 管理节点数据和业务逻辑
+ * - 渲染层 (RenderElement): 专注Canvas绘制和渲染
+ * - 懒加载桥梁 (renderDom): 按需创建渲染对象
  *
  * 主要特性：
- * - 渲染器抽象层，支持多种宿主环境
- * - React组件化开发体验
- * - 统一的渲染节点树管理
- * - 高性能的增量更新
+ * - 双层架构设计，关注点分离
+ * - 懒加载渲染对象，性能优化
+ * - 渲染缓存机制，减少重复创建
+ * - 基于Canvas2D的高性能渲染
+ * - 类似Skia的声明式UI组件系统
  */
 
-// ========== 核心接口 ==========
-export * from "./interfaces/IRenderer";
+// ========== 节点树Canvas渲染器 ==========
+export { NodeTreeCanvasRenderer } from "./canvas/NodeTreeCanvasRenderer";
 
-// ========== 渲染器实现 ==========
-export * from "./renderers/Canvas2DRenderer";
+// ========== 渲染元素系统 ==========
+export {
+  RenderElement,
+  RectRenderElement,
+  PageRenderElement,
+  ContainerRenderElement,
+  RenderElementFactory,
+} from "./canvas/RenderElement";
 
-// ========== React集成 ==========
-export * from "./react/HostConfig";
-export * from "./react/ReactRenderer";
+// ========== UI渲染元素系统 ==========
+export {
+  UIRenderElement,
+  GridRenderElement,
+  RulerRenderElement,
+  BackgroundRenderElement,
+} from "./canvas/UIRenderElement";
 
-// ========== 组件库 ==========
-export * from "./components";
+// ========== Canvas组件系统 ==========
+export { Canvas, Grid, Ruler, Background } from "./canvas/CanvasComponent";
 
-// ========== 工厂模式 ==========
-export * from "./factory/RendererFactory";
-
-// ========== 便捷创建函数 ==========
-import { rendererFactory } from "./factory/RendererFactory";
-import { ReactRenderer } from "./react/ReactRenderer";
-
-/**
- * 创建Canvas React渲染器的便捷函数
- * @param canvas Canvas元素
- * @param rendererType 渲染器类型，默认为'canvas2d'
- * @param options 选项
- */
-export function createCanvasRenderer(
-  canvas: HTMLCanvasElement,
-  rendererType: string = "canvas2d",
-  options?: Record<string, unknown>
-): ReactRenderer {
-  console.log("🎨 创建Canvas React渲染器:", rendererType);
-
-  // 创建底层渲染器
-  const renderer = rendererFactory.createRenderer(
-    rendererType,
-    canvas,
-    options
-  );
-
-  // 创建React渲染器封装
-  const reactRenderer = new ReactRenderer(renderer);
-
-  console.log("✅ Canvas React渲染器创建完成");
-  return reactRenderer;
-}
-
-/**
- * 快速创建Canvas2D React渲染器
- * @param canvas Canvas元素
- * @param options 选项
- */
-export function createCanvas2DRenderer(
-  canvas: HTMLCanvasElement,
-  options?: Record<string, unknown>
-): ReactRenderer {
-  return createCanvasRenderer(canvas, "canvas2d", options);
-}
-
-// ========== 全局渲染器工厂 ==========
-export { rendererFactory } from "./factory/RendererFactory";
+// ========== 类型定义 ==========
+export type { RenderContext } from "./canvas/RenderElement";
+export type { UIRenderProps } from "./canvas/UIRenderElement";
+export type {
+  CanvasComponentProps,
+  CanvasComponentRef,
+  GridProps,
+  RulerProps,
+  BackgroundProps,
+} from "./canvas/CanvasComponent";
