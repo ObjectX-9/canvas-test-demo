@@ -10,7 +10,7 @@ export type CanvasElementType =
   | "canvas-container"
   | "canvas-grid"
   | "canvas-ruler"
-  | "ckpage"
+  | "canvas-page"
   | "canvas-rect"
   | "canvas-circle";
 
@@ -75,7 +75,7 @@ export const createCanvasRect = (
 /**
  * Canvas元素创建器类型
  */
-export type CanvasElementCreator<T extends CanvasElementType> = (
+export type CanvasElementCreator = (
   canvas: HTMLCanvasElement,
   props: CanvasElementProps
 ) => CanvasElement;
@@ -83,11 +83,11 @@ export type CanvasElementCreator<T extends CanvasElementType> = (
 /**
  * Canvas元素映射表（模仿Skia的CkElements）
  */
-const CanvasElements: { [K in CanvasElementType]: CanvasElementCreator<K> } = {
+const CanvasElements: { [K in CanvasElementType]: CanvasElementCreator } = {
   "canvas-container": createCanvasContainer,
   "canvas-grid": createCanvasGrid,
   "canvas-ruler": createCanvasRuler,
-  ckpage: createCkPage,
+  "canvas-page": createCkPage,
   "canvas-rect": createCanvasRect,
   "canvas-circle": (canvas, props) => {
     return createCanvasContainer(canvas, props);
@@ -101,7 +101,7 @@ export const getCkTypeByType = (type: string): CkElementType => {
     case "rectangle":
       return "canvas-rect";
     default:
-      return "ckpage";
+      return "canvas-page";
   }
 };
 

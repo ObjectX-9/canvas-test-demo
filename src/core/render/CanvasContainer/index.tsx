@@ -15,8 +15,7 @@ const CanvasContainer = () => {
     if (rendererRef.current) {
       rendererRef.current.render(
         <>
-          <canvas-rect x={100} y={100} w={100} h={100} fill="green" />
-          <ckpage></ckpage>
+          <canvas-page></canvas-page>
         </>
       );
     }

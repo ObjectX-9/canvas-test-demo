@@ -1,5 +1,3 @@
-import logger from "@/core/utils/logerHelper";
-
 class CanvasRenderApi {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -55,7 +53,6 @@ class CanvasRenderApi {
     height: number;
     radius?: number;
   }) {
-    logger.info("renderRect", this.canvas);
     this.ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
     if (rect.radius) {
       this.ctx.beginPath();

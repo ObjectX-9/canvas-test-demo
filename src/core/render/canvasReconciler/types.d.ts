@@ -7,7 +7,7 @@ declare global {
       "canvas-container": {
         children?: React.ReactNode;
       };
-      
+
       // UI元素
       "canvas-grid": {
         visible?: boolean;
@@ -17,7 +17,7 @@ declare global {
         zIndex?: number;
         children?: React.ReactNode;
       };
-      
+
       "canvas-ruler": {
         visible?: boolean;
         rulerSize?: number;
@@ -27,15 +27,15 @@ declare global {
         zIndex?: number;
         children?: React.ReactNode;
       };
-      
+
       "canvas-page-background": {
         visible?: boolean;
         zIndex?: number;
         children?: React.ReactNode;
       };
-      
+
       // 页面容器（模仿Skia的ck-pageElement）
-      "ckpage": {
+      "canvas-page": {
         visible?: boolean;
         zIndex?: number;
         children?: React.ReactNode;
