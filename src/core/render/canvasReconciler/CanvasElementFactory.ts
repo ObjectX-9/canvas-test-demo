@@ -1,6 +1,6 @@
 import { CanvasGrid, CanvasRuler } from "../canvasElement/UiRenderElement";
 import { CanvasRect } from "../canvasElement/Element/CanvasRect";
-import { CkPage } from "../canvasElement/Element/CkPage";
+import { CanvasPage } from "../canvasElement/Element/CanvasPage";
 import { CanvasContainer, CanvasElement } from "../canvasElement/Element";
 
 /**
@@ -65,7 +65,7 @@ export const createCanvasRuler = (
 export const createCkPage = (
   canvas: HTMLCanvasElement,
   props: CanvasElementProps
-): CkPage => new CkPage(canvas, props);
+): CanvasPage => new CanvasPage(canvas, props);
 
 export const createCanvasRect = (
   canvas: HTMLCanvasElement,
