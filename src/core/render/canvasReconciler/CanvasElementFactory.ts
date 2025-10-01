@@ -1,97 +1,144 @@
 import { CanvasGrid, CanvasRuler } from "../canvasElement/UiRenderElement";
 import { CanvasRect } from "../canvasElement/Element/CanvasRect";
 import { CanvasPage } from "../canvasElement/Element/CanvasPage";
-import { CanvasContainer, CanvasElement } from "../canvasElement/Element";
+import { Rectangle } from "@/core/nodeTree/node/rectangle";
+import { PageNode } from "@/core/nodeTree/node/pageNode";
+import { BaseNode } from "@/core/nodeTree/node/baseNode";
 
 /**
  * Canvas元素类型定义
  */
 export type CanvasElementType =
-  | "canvas-container"
   | "canvas-grid"
   | "canvas-ruler"
   | "canvas-page"
-  | "canvas-rect"
-  | "canvas-circle";
+  | "canvas-rect";
 
 /**
- * Canvas元素属性类型
+ * Canvas元素基础属性（所有元素共有的属性）
  */
-export interface CanvasElementProps {
-  // 通用属性
+export interface BaseCanvasElementProps {
   id?: string;
   visible?: boolean;
   zIndex?: number;
   children?: unknown;
-
-  // UI元素属性
-  gridSize?: number;
-  strokeStyle?: string;
-  lineWidth?: number;
-  rulerSize?: number;
-  backgroundColor?: string;
-  textColor?: string;
-
-  // 节点元素属性
-  x?: number;
-  y?: number;
-  w?: number;
-  h?: number;
-  r?: number;
-  fill?: string;
-  radius?: number;
-
   [key: string]: unknown;
 }
 
 /**
- * Canvas元素创建函数
+ * Canvas网格元素属性
  */
-export const createCanvasContainer = (
-  canvas: HTMLCanvasElement,
-  props: CanvasElementProps
-): CanvasContainer => new CanvasContainer(canvas, props);
+export interface CanvasGridProps extends BaseCanvasElementProps {
+  gridSize?: number;
+  strokeStyle?: string;
+  lineWidth?: number;
+  jsNode?: BaseNode;
+}
+
+/**
+ * Canvas标尺元素属性
+ */
+export interface CanvasRulerProps extends BaseCanvasElementProps {
+  rulerSize?: number;
+  backgroundColor?: string;
+  textColor?: string;
+  strokeStyle?: string;
+  jsNode?: BaseNode;
+}
+
+/**
+ * Canvas页面元素属性
+ */
+export interface CanvasPageProps extends BaseCanvasElementProps {
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
+  jsNode?: PageNode;
+}
+
+/**
+ * Canvas矩形元素属性
+ */
+export interface CanvasRectProps extends BaseCanvasElementProps {
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
+  fill?: string;
+  radius?: number;
+  jsNode?: Rectangle;
+}
+
+/**
+ * 通用Canvas元素属性类型（兼容旧代码）
+ */
+export type CanvasElementProps =
+  | CanvasGridProps
+  | CanvasRulerProps
+  | CanvasPageProps
+  | CanvasRectProps;
 
 export const createCanvasGrid = (
   canvas: HTMLCanvasElement,
-  props: CanvasElementProps
+  props: CanvasGridProps
 ): CanvasGrid => new CanvasGrid(canvas, props);
 
 export const createCanvasRuler = (
   canvas: HTMLCanvasElement,
-  props: CanvasElementProps
+  props: CanvasRulerProps
 ): CanvasRuler => new CanvasRuler(canvas, props);
 
 export const createCkPage = (
   canvas: HTMLCanvasElement,
-  props: CanvasElementProps
+  props: CanvasPageProps
 ): CanvasPage => new CanvasPage(canvas, props);
 
 export const createCanvasRect = (
   canvas: HTMLCanvasElement,
-  props: CanvasElementProps
+  props: CanvasRectProps
 ): CanvasRect => new CanvasRect(canvas, props);
 
 /**
- * Canvas元素创建器类型
+ * Canvas元素创建器类型映射
  */
-export type CanvasElementCreator = (
-  canvas: HTMLCanvasElement,
-  props: CanvasElementProps
-) => CanvasElement;
+export type CanvasElementCreatorMap = {
+  "canvas-grid": (
+    canvas: HTMLCanvasElement,
+    props: CanvasGridProps
+  ) => CanvasGrid;
+  "canvas-ruler": (
+    canvas: HTMLCanvasElement,
+    props: CanvasRulerProps
+  ) => CanvasRuler;
+  "canvas-page": (
+    canvas: HTMLCanvasElement,
+    props: CanvasPageProps
+  ) => CanvasPage;
+  "canvas-rect": (
+    canvas: HTMLCanvasElement,
+    props: CanvasRectProps
+  ) => CanvasRect;
+};
+
+/**
+ * Canvas元素属性类型映射
+ */
+export type CanvasElementPropsMap = {
+  "canvas-grid": CanvasGridProps;
+  "canvas-ruler": CanvasRulerProps;
+  "canvas-page": CanvasPageProps;
+  "canvas-rect": CanvasRectProps;
+};
 
 /**
  * Canvas元素映射表（模仿Skia的CkElements）
  */
-const CanvasElements: { [K in CanvasElementType]: CanvasElementCreator } = {
-  "canvas-container": createCanvasContainer,
+const CanvasElements: CanvasElementCreatorMap = {
   "canvas-grid": createCanvasGrid,
   "canvas-ruler": createCanvasRuler,
   "canvas-page": createCkPage,
   "canvas-rect": createCanvasRect,
-  "canvas-circle": (canvas, props) => {
-    return createCanvasContainer(canvas, props);
-  },
 };
 
 export type CkElementType = keyof typeof CanvasElements;
@@ -108,14 +155,18 @@ export const getCkTypeByType = (type: string): CkElementType => {
 /**
  * 创建Canvas元素（模仿Skia的createCkElement）
  */
-export function createCanvasElement(
-  type: CanvasElementType,
+export function createCanvasElement<T extends CanvasElementType>(
+  type: T,
   canvas: HTMLCanvasElement,
-  props: CanvasElementProps
-): CanvasElement {
+  props: CanvasElementPropsMap[T]
+): ReturnType<CanvasElementCreatorMap[T]> {
   const creator = CanvasElements[type];
   if (creator) {
-    return creator(canvas, props);
+    return creator(
+      canvas,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      props as any
+    ) as ReturnType<CanvasElementCreatorMap[T]>;
   }
 
   throw new Error(`Unknown canvas element type: ${type}`);

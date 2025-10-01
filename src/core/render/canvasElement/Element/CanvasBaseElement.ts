@@ -1,18 +1,23 @@
 import { RenderContext, ViewTransform } from "../types";
-import { CanvasElementProps } from "../../canvasReconciler/CanvasElementFactory";
+import { BaseCanvasElementProps } from "../../canvasReconciler/CanvasElementFactory";
 
 /**
  * Canvas元素基类
  * 简化版本，直接使用Canvas进行渲染
+ * @template T - 元素类型字符串
+ * @template P - 元素属性类型
  */
-export abstract class CanvasElement<T extends string = string> {
+export abstract class CanvasElement<
+  T extends string = string,
+  P extends BaseCanvasElementProps = BaseCanvasElementProps
+> {
   abstract readonly type: T;
-  protected props: CanvasElementProps;
+  protected props: P;
   public children: CanvasElement[] = [];
   protected parent: CanvasElement | null = null;
   protected canvas: HTMLCanvasElement;
 
-  constructor(canvas: HTMLCanvasElement, props: CanvasElementProps) {
+  constructor(canvas: HTMLCanvasElement, props: P) {
     this.canvas = canvas;
     this.props = props;
   }
@@ -60,14 +65,14 @@ export abstract class CanvasElement<T extends string = string> {
   /**
    * 更新属性
    */
-  updateProps(newProps: Partial<CanvasElementProps>): void {
+  updateProps(newProps: Partial<P>): void {
     this.props = { ...this.props, ...newProps };
   }
 
   /**
    * 获取属性
    */
-  getProps(): CanvasElementProps {
+  getProps(): P {
     return this.props;
   }
 

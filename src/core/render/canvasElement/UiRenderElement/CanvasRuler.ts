@@ -1,13 +1,17 @@
 import { RenderContext, ViewTransform } from "../types";
 import { CanvasElement } from "../Element/CanvasBaseElement";
 import { RenderApi } from "../../renderApi/type";
+import { CanvasRulerProps } from "../../canvasReconciler/CanvasElementFactory";
 
 /**
  * Canvas标尺UI元素
  * 根据视图变换动态显示坐标刻度
  * 这是一个UI辅助元素，没有对应的节点数据
  */
-export class CanvasRuler extends CanvasElement<"canvas-ruler"> {
+export class CanvasRuler extends CanvasElement<
+  "canvas-ruler",
+  CanvasRulerProps
+> {
   readonly type = "canvas-ruler" as const;
 
   protected onRender(
@@ -16,10 +20,10 @@ export class CanvasRuler extends CanvasElement<"canvas-ruler"> {
   ): void {
     const { renderApi, canvas } = context;
 
-    const rulerSize = (this.props.rulerSize as number) || 25;
-    const backgroundColor = (this.props.backgroundColor as string) || "#f0f0f0";
-    const textColor = (this.props.textColor as string) || "#333";
-    const strokeStyle = (this.props.strokeStyle as string) || "#ccc";
+    const rulerSize = this.props.rulerSize || 25;
+    const backgroundColor = this.props.backgroundColor || "#f0f0f0";
+    const textColor = this.props.textColor || "#333";
+    const strokeStyle = this.props.strokeStyle || "#ccc";
     const visible = this.props.visible !== false;
 
     if (!visible) return;

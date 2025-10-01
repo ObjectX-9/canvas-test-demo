@@ -39,7 +39,7 @@ export const mockElementData = {
     y: 100,
     w: 100,
     h: 100,
-    radius: 0,
+    radius: 10,
     rotation: 0,
   },
   "2": {
@@ -51,7 +51,7 @@ export const mockElementData = {
     y: 200,
     w: 100,
     h: 100,
-    radius: 0,
+    radius: 20,
     rotation: 0,
   },
   "3": {

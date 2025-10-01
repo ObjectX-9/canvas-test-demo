@@ -34,3 +34,6 @@ export {
   type CanvasElementType,
   type CanvasElementProps,
 } from "./canvasReconciler/CanvasElementFactory";
+
+// 辅助函数
+export { getMainCanvasElement } from "./helper";

@@ -1,10 +1,10 @@
 import { PencilState, PathPoint } from "../../types/nodes/pencilState";
-import { BaseNode } from "./baseNode";
+import { SkiaNode } from "./skiaNode";
 
 /**
  * 铅笔节点类
  */
-export class Pencil extends BaseNode {
+export class Pencil extends SkiaNode {
   _state: PencilState;
 
   constructor(state: PencilState) {

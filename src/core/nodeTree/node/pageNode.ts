@@ -1,7 +1,7 @@
 import { PageState } from "../../types/nodes/pageState";
-import { BaseNode } from "./baseNode";
+import { ContainerNode } from "./container";
 
-export class PageNode extends BaseNode {
+export class PageNode extends ContainerNode {
   _state: PageState;
 
   constructor(state: PageState) {

@@ -1,7 +1,7 @@
 import { RectangleState } from "../../types/nodes/rectangleState";
-import { BaseNode } from "./baseNode";
+import { SkiaNode } from "./skiaNode";
 
-export class Rectangle extends BaseNode {
+export class Rectangle extends SkiaNode {
   _state: RectangleState;
   constructor(state: RectangleState) {
     super(state);

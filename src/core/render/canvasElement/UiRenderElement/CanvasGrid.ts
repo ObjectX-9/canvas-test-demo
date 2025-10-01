@@ -1,12 +1,13 @@
 import { RenderContext, ViewTransform } from "../types";
 import { CanvasElement } from "../Element/CanvasBaseElement";
+import { CanvasGridProps } from "../../canvasReconciler/CanvasElementFactory";
 
 /**
  * Canvas网格UI元素
  * 根据视图变换智能调整网格显示
  * 这是一个UI辅助元素，没有对应的节点数据
  */
-export class CanvasGrid extends CanvasElement<"canvas-grid"> {
+export class CanvasGrid extends CanvasElement<"canvas-grid", CanvasGridProps> {
   readonly type = "canvas-grid" as const;
 
   protected onRender(
@@ -15,9 +16,9 @@ export class CanvasGrid extends CanvasElement<"canvas-grid"> {
   ): void {
     const { renderApi, canvas } = context;
 
-    const gridSize = (this.props.gridSize as number) || 20;
-    const strokeStyle = (this.props.strokeStyle as string) || "#e0e0e0";
-    const lineWidth = (this.props.lineWidth as number) || 1;
+    const gridSize = this.props.gridSize || 20;
+    const strokeStyle = this.props.strokeStyle || "#e0e0e0";
+    const lineWidth = this.props.lineWidth || 1;
     const visible = this.props.visible !== false;
 
     if (!visible) return;

@@ -32,7 +32,7 @@ export function createSkiaLikeHostConfig(renderer: {
 
     // 创建文本实例
     createTextInstance(text: string): CanvasElement {
-      return createCanvasElement("canvas-container", canvas, {
+      return createCanvasElement("canvas-page", canvas, {
         children: text,
       });
     },

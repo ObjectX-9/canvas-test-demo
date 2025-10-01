@@ -2,11 +2,11 @@ import React from "react";
 import Reconciler from "react-reconciler";
 import { createSkiaLikeHostConfig } from "./SkiaLikeHostConfig";
 import { CanvasElement } from "../canvasElement/Element/CanvasBaseElement";
-import { createCanvasContainer } from "./CanvasElementFactory";
 import { RenderContext, ViewTransform } from "../canvasElement/types";
 import { viewManager, coordinateSystemManager } from "../../manage";
 import { RenderApi } from "../renderApi/type";
 import logger from "@/core/utils/logerHelper";
+import { createCanvasElement } from "./CanvasElementFactory";
 
 /**
  * 简化的Skia风格Canvas渲染器
@@ -37,7 +37,7 @@ export class SkiaLikeRenderer {
     this.reconciler = Reconciler(hostConfig);
 
     // 创建根容器
-    this.rootContainer = createCanvasContainer(canvas, {});
+    this.rootContainer = createCanvasElement("canvas-page", canvas, {});
   }
 
   /**

@@ -8,9 +8,10 @@ import { Pencil } from "./node/pencil";
 import { PageNode } from "./node/pageNode";
 import { elementStore } from "../store/ElementStore";
 import { pageStore } from "../store/PageStore";
+import { SkiaNode } from "./node/skiaNode";
 
 export class NodeTree {
-  private nodes: Map<string, BaseNode> = new Map();
+  private nodes: Map<string, SkiaNode> = new Map();
 
   addNode(nodeState: BaseState) {
     if (!this.nodes.has(nodeState.id)) {
@@ -35,7 +36,7 @@ export class NodeTree {
       }
 
       // 将节点对象添加到节点树
-      this.nodes.set(nodeState.id, node);
+      this.nodes.set(nodeState.id, node as SkiaNode);
 
       if (nodeState.type === "page") {
         pageStore.addPage(nodeState.id, nodeState as PageState);

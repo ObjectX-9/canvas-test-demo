@@ -1,12 +1,10 @@
 import { getCkTypeByType } from "@/core/render/canvasReconciler/CanvasElementFactory";
 import { BaseState } from "../../types/nodes/baseState";
-import { SkiaNode } from "./skiaNode";
 
-export class BaseNode extends SkiaNode {
+export class BaseNode {
   _state: BaseState;
 
   constructor(state: BaseState) {
-    super();
     this._state = state;
   }
 

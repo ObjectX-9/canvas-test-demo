@@ -4,6 +4,8 @@ import { getRenderApi } from "../renderApi";
 import { RenderEngineType, renderingEngine } from "../store/RenderingEngine";
 
 export function initRenderingEngine(canvas: HTMLCanvasElement) {
+  // 存储画布元素
+  renderingEngine.setCanvas(canvas);
   // 设置当前渲染引擎
   renderingEngine.setCurRenderEngine(RenderEngineType.CANVAS);
   // 获取渲染api
