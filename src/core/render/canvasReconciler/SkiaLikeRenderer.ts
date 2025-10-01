@@ -1,10 +1,12 @@
 import React from "react";
 import Reconciler from "react-reconciler";
 import { createSkiaLikeHostConfig } from "./SkiaLikeHostConfig";
-import { CanvasElement } from "../canvas/Element/CanvasBaseElement";
+import { CanvasElement } from "../canvasElement/Element/CanvasBaseElement";
 import { createCanvasContainer } from "./CanvasElementFactory";
-import { RenderContext, ViewTransform } from "../canvas/types";
+import { RenderContext, ViewTransform } from "../canvasElement/types";
 import { viewManager, coordinateSystemManager } from "../../manage";
+import { RenderApi } from "../renderApi/type";
+import logger from "@/core/utils/logerHelper";
 
 /**
  * 简化的Skia风格Canvas渲染器
@@ -13,19 +15,20 @@ import { viewManager, coordinateSystemManager } from "../../manage";
 export class SkiaLikeRenderer {
   private reconciler: ReturnType<typeof Reconciler>;
   private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
+  private renderApi: RenderApi;
   private pixelRatio: number;
   private rootContainer: CanvasElement;
   private fiberRoot: unknown = null;
   private animationId: number | null = null;
   private isRenderRequested = false;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, renderApi: RenderApi) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext("2d")!;
+    this.renderApi = renderApi;
     this.pixelRatio = window.devicePixelRatio || 1;
 
-    if (!this.ctx) {
+    if (!this.renderApi) {
+      logger.error("无法获取Canvas 2D上下文");
       throw new Error("无法获取Canvas 2D上下文");
     }
 
@@ -75,7 +78,7 @@ export class SkiaLikeRenderer {
     this.canvas.height = height * this.pixelRatio;
     this.canvas.style.width = width + "px";
     this.canvas.style.height = height + "px";
-    this.ctx.scale(this.pixelRatio, this.pixelRatio);
+    this.renderApi.scale(this.pixelRatio);
   }
 
   /**
@@ -113,29 +116,29 @@ export class SkiaLikeRenderer {
     // 创建渲染上下文
     const renderContext: RenderContext = {
       canvas: this.canvas,
-      ctx: this.ctx,
+      renderApi: this.renderApi,
       pixelRatio: this.pixelRatio,
     };
 
     // 应用视图变换并渲染所有元素
-    this.ctx.save();
-    this.ctx.translate(translation.pageX, translation.pageY);
-    this.ctx.scale(scale, scale);
+    this.renderApi.save();
+    this.renderApi.translate(translation.pageX, translation.pageY);
+    this.renderApi.scale(scale);
 
     // 渲染根容器（会递归渲染所有子元素）
     this.rootContainer.render(renderContext, viewTransform);
 
-    this.ctx.restore();
+    this.renderApi.restore();
   }
 
   /**
    * 清空画布
    */
   private clearCanvas(): void {
-    this.ctx.save();
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.restore();
+    this.renderApi.save();
+    this.renderApi.setTransform(1, 0, 0, 1, 0, 0);
+    this.renderApi.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.renderApi.restore();
   }
 
   /**
@@ -143,13 +146,6 @@ export class SkiaLikeRenderer {
    */
   getCanvas(): HTMLCanvasElement {
     return this.canvas;
-  }
-
-  /**
-   * 获取Canvas上下文
-   */
-  getContext(): CanvasRenderingContext2D {
-    return this.ctx;
   }
 
   /**
@@ -182,7 +178,8 @@ export class SkiaLikeRenderer {
  * 创建简化的Skia风格渲染器
  */
 export function createSkiaLikeRenderer(
-  canvas: HTMLCanvasElement
+  canvas: HTMLCanvasElement,
+  renderApi: RenderApi
 ): SkiaLikeRenderer {
-  return new SkiaLikeRenderer(canvas);
+  return new SkiaLikeRenderer(canvas, renderApi);
 }

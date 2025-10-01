@@ -1,5 +1,5 @@
 import { RenderContext, ViewTransform } from "../types";
-import { CanvasElementProps } from "../../direct/CanvasElementFactory";
+import { CanvasElementProps } from "../../canvasReconciler/CanvasElementFactory";
 
 /**
  * Canvas元素基类
@@ -11,16 +11,10 @@ export abstract class CanvasElement<T extends string = string> {
   public children: CanvasElement[] = [];
   protected parent: CanvasElement | null = null;
   protected canvas: HTMLCanvasElement;
-  protected ctx: CanvasRenderingContext2D;
 
   constructor(canvas: HTMLCanvasElement, props: CanvasElementProps) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext("2d")!;
     this.props = props;
-
-    if (!this.ctx) {
-      throw new Error("无法获取Canvas 2D上下文");
-    }
   }
 
   /**
@@ -82,13 +76,6 @@ export abstract class CanvasElement<T extends string = string> {
    */
   getCanvas(): HTMLCanvasElement {
     return this.canvas;
-  }
-
-  /**
-   * 获取Canvas上下文
-   */
-  getContext(): CanvasRenderingContext2D {
-    return this.ctx;
   }
 
   /**

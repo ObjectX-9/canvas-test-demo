@@ -1,5 +1,6 @@
 import { RenderContext, ViewTransform } from "../types";
 import { CanvasElement } from "../Element/CanvasBaseElement";
+import { RenderApi } from "../../renderApi/type";
 
 /**
  * Canvas标尺UI元素
@@ -13,7 +14,7 @@ export class CanvasRuler extends CanvasElement<"canvas-ruler"> {
     context: RenderContext,
     viewTransform?: ViewTransform
   ): void {
-    const { ctx, canvas } = context;
+    const { renderApi, canvas } = context;
 
     const rulerSize = (this.props.rulerSize as number) || 25;
     const backgroundColor = (this.props.backgroundColor as string) || "#f0f0f0";
@@ -23,42 +24,58 @@ export class CanvasRuler extends CanvasElement<"canvas-ruler"> {
 
     if (!visible) return;
 
-    ctx.save();
+    renderApi.save();
 
     try {
       // 绘制标尺背景
-      ctx.fillStyle = backgroundColor;
-      ctx.fillRect(0, 0, canvas.width, rulerSize);
-      ctx.fillRect(0, 0, rulerSize, canvas.height);
+      renderApi.setFillStyle(backgroundColor);
+      renderApi.renderRect({
+        x: 0,
+        y: 0,
+        width: canvas.width,
+        height: rulerSize,
+      });
+      renderApi.renderRect({
+        x: 0,
+        y: 0,
+        width: rulerSize,
+        height: canvas.height,
+      });
 
       // 绘制刻度
-      this.drawRulerTicks(ctx, canvas, rulerSize, textColor, viewTransform);
+      this.drawRulerTicks(
+        renderApi,
+        canvas,
+        rulerSize,
+        textColor,
+        viewTransform
+      );
 
       // 绘制边框
-      ctx.strokeStyle = strokeStyle;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, rulerSize);
-      ctx.lineTo(canvas.width, rulerSize);
-      ctx.moveTo(rulerSize, 0);
-      ctx.lineTo(rulerSize, canvas.height);
-      ctx.stroke();
+      renderApi.setStrokeStyle(strokeStyle);
+      renderApi.setLineWidth(1);
+      renderApi.beginPath();
+      renderApi.moveTo(0, rulerSize);
+      renderApi.lineTo(canvas.width, rulerSize);
+      renderApi.moveTo(rulerSize, 0);
+      renderApi.lineTo(rulerSize, canvas.height);
+      renderApi.stroke();
     } finally {
-      ctx.restore();
+      renderApi.restore();
     }
   }
 
   private drawRulerTicks(
-    ctx: CanvasRenderingContext2D,
+    renderApi: RenderApi,
     canvas: HTMLCanvasElement,
     rulerSize: number,
     textColor: string,
     viewTransform?: ViewTransform
   ): void {
-    ctx.fillStyle = textColor;
-    ctx.font = "10px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+    renderApi.setFillStyle(textColor);
+    renderApi.setFont("10px sans-serif");
+    renderApi.setTextAlign("center");
+    renderApi.setTextBaseline("middle");
 
     const scale = viewTransform?.scale || 1;
     const offsetX = viewTransform?.offsetX || 0;
@@ -97,15 +114,19 @@ export class CanvasRuler extends CanvasElement<"canvas-ruler"> {
         const isMajorTick = worldX % tickInterval === 0;
         const tickHeight = isMajorTick ? 8 : 4;
 
-        ctx.beginPath();
-        ctx.moveTo(screenX, rulerSize - tickHeight);
-        ctx.lineTo(screenX, rulerSize);
-        ctx.strokeStyle = textColor;
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        renderApi.beginPath();
+        renderApi.moveTo(screenX, rulerSize - tickHeight);
+        renderApi.lineTo(screenX, rulerSize);
+        renderApi.setStrokeStyle(textColor);
+        renderApi.setLineWidth(1);
+        renderApi.stroke();
 
         if (isMajorTick && Math.abs(worldX) > 0.1) {
-          ctx.fillText(Math.round(worldX).toString(), screenX, rulerSize / 2);
+          renderApi.fillText(
+            Math.round(worldX).toString(),
+            screenX,
+            rulerSize / 2
+          );
         }
       }
     }
@@ -127,19 +148,19 @@ export class CanvasRuler extends CanvasElement<"canvas-ruler"> {
         const isMajorTick = worldY % tickInterval === 0;
         const tickWidth = isMajorTick ? 8 : 4;
 
-        ctx.beginPath();
-        ctx.moveTo(rulerSize - tickWidth, screenY);
-        ctx.lineTo(rulerSize, screenY);
-        ctx.strokeStyle = textColor;
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        renderApi.beginPath();
+        renderApi.moveTo(rulerSize - tickWidth, screenY);
+        renderApi.lineTo(rulerSize, screenY);
+        renderApi.setStrokeStyle(textColor);
+        renderApi.setLineWidth(1);
+        renderApi.stroke();
 
         if (isMajorTick && Math.abs(worldY) > 0.1) {
-          ctx.save();
-          ctx.translate(rulerSize / 2, screenY);
-          ctx.rotate(-Math.PI / 2);
-          ctx.fillText(Math.round(worldY).toString(), 0, 0);
-          ctx.restore();
+          renderApi.save();
+          renderApi.translate(rulerSize / 2, screenY);
+          renderApi.rotate(-Math.PI / 2);
+          renderApi.fillText(Math.round(worldY).toString(), 0, 0);
+          renderApi.restore();
         }
       }
     }
@@ -149,13 +170,23 @@ export class CanvasRuler extends CanvasElement<"canvas-ruler"> {
     const originScreenY = 0 * scale + offsetY;
 
     if (originScreenX >= rulerSize && originScreenX <= canvas.width) {
-      ctx.fillStyle = "#ff0000";
-      ctx.fillRect(originScreenX - 1, 0, 2, rulerSize);
+      renderApi.setFillStyle("#ff0000");
+      renderApi.renderRect({
+        x: originScreenX - 1,
+        y: 0,
+        width: 2,
+        height: rulerSize,
+      });
     }
 
     if (originScreenY >= rulerSize && originScreenY <= canvas.height) {
-      ctx.fillStyle = "#ff0000";
-      ctx.fillRect(0, originScreenY - 1, rulerSize, 2);
+      renderApi.setFillStyle("#ff0000");
+      renderApi.renderRect({
+        x: 0,
+        y: originScreenY - 1,
+        width: rulerSize,
+        height: 2,
+      });
     }
   }
 }

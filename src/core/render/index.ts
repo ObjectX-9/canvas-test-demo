@@ -19,18 +19,18 @@
  */
 
 // UI元素类型（纯UI，无节点数据）
-export { CanvasGrid, CanvasRuler } from "./canvas/UiRenderElement/";
+export { CanvasGrid, CanvasRuler } from "./canvasElement/UiRenderElement";
 
 // 基础类型
-export type { RenderContext, ViewTransform } from "./canvas/types";
+export type { RenderContext, ViewTransform } from "./canvasElement/types";
 
 // ========== Skia风格直接渲染器 ==========
 export {
   SkiaLikeRenderer,
   createSkiaLikeRenderer,
-} from "./direct/SkiaLikeRenderer";
+} from "./canvasReconciler/SkiaLikeRenderer";
 export {
   createCanvasElement,
   type CanvasElementType,
   type CanvasElementProps,
-} from "./direct/CanvasElementFactory";
+} from "./canvasReconciler/CanvasElementFactory";

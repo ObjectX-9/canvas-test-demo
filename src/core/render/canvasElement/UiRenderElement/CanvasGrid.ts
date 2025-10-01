@@ -13,7 +13,7 @@ export class CanvasGrid extends CanvasElement<"canvas-grid"> {
     context: RenderContext,
     viewTransform?: ViewTransform
   ): void {
-    const { ctx, canvas } = context;
+    const { renderApi, canvas } = context;
 
     const gridSize = (this.props.gridSize as number) || 20;
     const strokeStyle = (this.props.strokeStyle as string) || "#e0e0e0";
@@ -22,11 +22,11 @@ export class CanvasGrid extends CanvasElement<"canvas-grid"> {
 
     if (!visible) return;
 
-    ctx.save();
+    renderApi.save();
 
     try {
-      ctx.strokeStyle = strokeStyle;
-      ctx.lineWidth = lineWidth;
+      renderApi.setStrokeStyle(strokeStyle);
+      renderApi.setLineWidth(lineWidth);
 
       // 获取视图变换信息
       const scale = viewTransform?.scale || 1;
@@ -47,23 +47,23 @@ export class CanvasGrid extends CanvasElement<"canvas-grid"> {
       const startY =
         ((offsetY % scaledGridSize) + scaledGridSize) % scaledGridSize;
 
-      ctx.beginPath();
+      renderApi.beginPath();
 
       // 绘制垂直线
       for (let x = startX; x <= canvas.width; x += scaledGridSize) {
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
+        renderApi.moveTo(x, 0);
+        renderApi.lineTo(x, canvas.height);
       }
 
       // 绘制水平线
       for (let y = startY; y <= canvas.height; y += scaledGridSize) {
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
+        renderApi.moveTo(0, y);
+        renderApi.lineTo(canvas.width, y);
       }
 
-      ctx.stroke();
+      renderApi.stroke();
     } finally {
-      ctx.restore();
+      renderApi.restore();
     }
   }
 }

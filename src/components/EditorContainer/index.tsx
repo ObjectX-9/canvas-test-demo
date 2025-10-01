@@ -1,4 +1,4 @@
-import CanvasContainer from "../CanvasContainer";
+import CanvasContainer from "@/core/render/CanvasContainer";
 import HeaderToolBar from "../CanvasPanel/HeaderToolBar";
 import CanvasPanelLeft from "../CanvasPanel/LeftPanel";
 import CanvasPanelRight from "../CanvasPanel/RightPanel";

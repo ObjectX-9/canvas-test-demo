@@ -1,4 +1,4 @@
-import { CanvasElement } from "../canvas/Element/CanvasBaseElement";
+import { CanvasElement } from "../canvasElement/Element/CanvasBaseElement";
 import {
   createCanvasElement,
   CanvasElementType,
@@ -54,7 +54,7 @@ export function createSkiaLikeHostConfig(renderer: {
     insertBefore(
       parent: CanvasElement,
       child: CanvasElement,
-      beforeChild: CanvasElement
+      _beforeChild: CanvasElement
     ): void {
       parent.removeChild(child);
       parent.appendChild(child);
@@ -66,8 +66,8 @@ export function createSkiaLikeHostConfig(renderer: {
 
     // 更新
     prepareUpdate(
-      instance: CanvasElement,
-      type: string,
+      _instance: CanvasElement,
+      _type: string,
       oldProps: CanvasElementProps,
       newProps: CanvasElementProps
     ): boolean {
@@ -77,8 +77,8 @@ export function createSkiaLikeHostConfig(renderer: {
     commitUpdate(
       instance: CanvasElement,
       updatePayload: boolean,
-      type: string,
-      oldProps: CanvasElementProps,
+      _type: string,
+      _oldProps: CanvasElementProps,
       newProps: CanvasElementProps
     ): void {
       if (updatePayload) {
@@ -88,7 +88,7 @@ export function createSkiaLikeHostConfig(renderer: {
 
     commitTextUpdate(
       textInstance: CanvasElement,
-      oldText: string,
+      _oldText: string,
       newText: string
     ): void {
       textInstance.updateProps({ children: newText });
@@ -112,7 +112,7 @@ export function createSkiaLikeHostConfig(renderer: {
     insertInContainerBefore(
       container: CanvasElement,
       child: CanvasElement,
-      beforeChild: CanvasElement
+      _beforeChild: CanvasElement
     ): void {
       container.removeChild(child);
       container.appendChild(child);
@@ -125,7 +125,7 @@ export function createSkiaLikeHostConfig(renderer: {
 
     getChildHostContext(
       parentContext: Record<string, unknown>,
-      type: string
+      _type: string
     ): Record<string, unknown> {
       return parentContext;
     },
@@ -147,7 +147,7 @@ export function createSkiaLikeHostConfig(renderer: {
       return null;
     },
 
-    resetAfterCommit(containerInfo: CanvasElement): void {
+    resetAfterCommit(_containerInfo: CanvasElement): void {
       // 提交后触发渲染
       renderer.requestRender();
     },

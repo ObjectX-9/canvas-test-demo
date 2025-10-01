@@ -1,4 +1,4 @@
-import { getCkTypeByType } from "@/core/render/direct/CanvasElementFactory";
+import { getCkTypeByType } from "@/core/render/canvasReconciler/CanvasElementFactory";
 import { BaseState } from "../../types/nodes/baseState";
 import { SkiaNode } from "./skiaNode";
 

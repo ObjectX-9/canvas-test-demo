@@ -15,15 +15,15 @@ export class CkPage extends CanvasElement<"ckpage"> {
     _viewTransform?: ViewTransform
   ): void {
     // 这里渲染下自己
-    const ctx = this.ctx;
-    ctx.save();
-    ctx.fillStyle = "red";
-    ctx.fillRect(0, 0, 100, 100);
-    ctx.restore();
+    const { renderApi } = _context;
+    renderApi.save();
+    renderApi.setFillStyle("red");
+    renderApi.renderRect({ x: 0, y: 0, width: 100, height: 100 });
+    renderApi.restore();
 
     const currentPage = pageManager.getCurrentPage();
 
-    currentPage?.children.forEach((child) => {
+    currentPage?.children.forEach((_child) => {
       const createElement = createCanvasElement("canvas-rect", this.canvas, {
         x: Math.random() * 100,
         y: Math.random() * 100,

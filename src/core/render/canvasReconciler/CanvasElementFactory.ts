@@ -1,7 +1,7 @@
-import { CanvasGrid, CanvasRuler } from "../canvas/UiRenderElement/";
-import { CanvasRect } from "../canvas/Element/CanvasRect";
-import { CkPage } from "../canvas/Element/CkPage";
-import { CanvasContainer, CanvasElement } from "../canvas/Element";
+import { CanvasGrid, CanvasRuler } from "../canvasElement/UiRenderElement";
+import { CanvasRect } from "../canvasElement/Element/CanvasRect";
+import { CkPage } from "../canvasElement/Element/CkPage";
+import { CanvasContainer, CanvasElement } from "../canvasElement/Element";
 
 /**
  * Canvas元素类型定义

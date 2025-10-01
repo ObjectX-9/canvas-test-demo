@@ -1,9 +1,11 @@
+import { RenderApi } from "../renderApi/type";
+
 /**
  * 渲染上下文接口
  */
 export interface RenderContext {
   canvas: HTMLCanvasElement;
-  ctx: CanvasRenderingContext2D;
+  renderApi: RenderApi;
   pixelRatio: number;
 }
 
