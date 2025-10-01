@@ -14,8 +14,6 @@ export class CanvasRect extends CanvasElement<"canvas-rect"> {
   ): void {
     const { ctx } = context;
 
-    console.log(`🎨 渲染Canvas矩形: ${this.props.id || "unknown"}`);
-
     const visible = this.props.visible !== false;
     if (!visible) return;
 

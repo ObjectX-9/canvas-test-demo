@@ -90,8 +90,6 @@ const CanvasElements: { [K in CanvasElementType]: CanvasElementCreator<K> } = {
   ckpage: createCkPage,
   "canvas-rect": createCanvasRect,
   "canvas-circle": (canvas, props) => {
-    // TODO: 实现CanvasCircle
-    console.log("📝 canvas-circle暂未实现");
     return createCanvasContainer(canvas, props);
   },
 };
@@ -115,8 +113,6 @@ export function createCanvasElement(
   canvas: HTMLCanvasElement,
   props: CanvasElementProps
 ): CanvasElement {
-  console.log(`🏭 创建Canvas元素: ${type}`, props);
-
   const creator = CanvasElements[type];
   if (creator) {
     return creator(canvas, props);

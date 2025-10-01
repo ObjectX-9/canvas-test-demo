@@ -31,7 +31,6 @@ class ElementStore {
    */
   getOneElement(_id: string) {
     const element = this.state[_id];
-    console.log(`ElementStore.getOneElement(${_id}):`, element);
     return element;
   }
 
@@ -44,9 +43,7 @@ class ElementStore {
    * @memberof ElementStoreStatic
    */
   addElement(id: string, elementState: BaseState) {
-    console.log("ElementStore.addElement 被调用:", id, elementState);
     this.state[id] = elementState as BaseState;
-    console.log("ElementStore 当前状态:", this.state);
   }
   /**
    * [ 删除单个组件 ]

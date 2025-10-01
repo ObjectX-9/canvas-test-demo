@@ -64,9 +64,6 @@ export class MouseMoveHandler implements IEventHandler {
       currentPage.panY = translation.pageY;
     }
 
-    // 数据变更通知已由React状态系统处理
-    console.log("画布拖拽完成，视图状态已更新");
-
     this.lastMousePosition = { x: event.clientX, y: event.clientY };
   }
 
@@ -90,7 +87,6 @@ export class MouseMoveHandler implements IEventHandler {
         (!this.currentHoverNode || this.currentHoverNode.id !== node.id) &&
         this.isPointerInsideNode(node, worldX, worldY)
       ) {
-        console.log("鼠标在节点上:", node.id);
         this.currentHoverNode = node;
 
         // 改变节点填充色（如果有相关方法）

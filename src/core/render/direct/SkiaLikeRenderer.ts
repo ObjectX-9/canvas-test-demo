@@ -6,9 +6,6 @@ import { createCanvasContainer } from "./CanvasElementFactory";
 import { RenderContext, ViewTransform } from "../canvas/types";
 import { viewManager, coordinateSystemManager } from "../../manage";
 
-// 导入类型声明
-import "./types.d";
-
 /**
  * 简化的Skia风格Canvas渲染器
  * 直接管理Canvas，去除中间抽象层
@@ -38,16 +35,12 @@ export class SkiaLikeRenderer {
 
     // 创建根容器
     this.rootContainer = createCanvasContainer(canvas, {});
-
-    console.log("🚀 SkiaLikeRenderer 初始化完成");
   }
 
   /**
    * 渲染React元素到Canvas
    */
   render(element: React.ReactElement, callback?: () => void): void {
-    console.log("🎨 开始SkiaLike渲染");
-
     try {
       // 如果是第一次渲染，创建fiber根
       if (!this.fiberRoot) {
@@ -62,10 +55,8 @@ export class SkiaLikeRenderer {
           null
         );
       }
-
       // 更新容器
       this.reconciler.updateContainer(element, this.fiberRoot, null, () => {
-        console.log("✅ SkiaLike渲染完成，准备触发Canvas渲染");
         // 立即触发一次Canvas渲染（用于初次渲染）
         this.performRender();
         callback?.();
@@ -91,12 +82,10 @@ export class SkiaLikeRenderer {
    * 请求渲染（供事件系统调用）
    */
   requestRender(): void {
-    console.log("🎯 请求渲染, isRenderRequested:", this.isRenderRequested);
     if (this.isRenderRequested) return;
 
     this.isRenderRequested = true;
     this.animationId = requestAnimationFrame(() => {
-      console.log("🎯 requestAnimationFrame 回调执行");
       this.performRender();
       this.isRenderRequested = false;
     });
@@ -106,8 +95,6 @@ export class SkiaLikeRenderer {
    * 执行实际渲染
    */
   performRender(): void {
-    console.log("🎨 执行Canvas渲染");
-
     // 清空画布
     this.clearCanvas();
 
@@ -182,9 +169,7 @@ export class SkiaLikeRenderer {
     }
 
     if (this.fiberRoot) {
-      this.reconciler.updateContainer(null, this.fiberRoot, null, () => {
-        console.log("🗑️ SkiaLike渲染器已卸载");
-      });
+      this.reconciler.updateContainer(null, this.fiberRoot, null, () => {});
       this.fiberRoot = null;
     }
 

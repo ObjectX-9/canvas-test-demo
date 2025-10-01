@@ -34,12 +34,15 @@ const CanvasContainer = () => {
   const [showGrid, setShowGrid] = useState(true);
   const [showRuler, setShowRuler] = useState(true);
 
-  console.log("✅ ~ currentPage:", currentPage);
-
   // 渲染Skia风格UI层
   const renderSkiaLikeUI = useCallback(() => {
     if (rendererRef.current) {
-      rendererRef.current.render(<ckpage></ckpage>);
+      rendererRef.current.render(
+        <>
+          <canvas-rect x={100} y={100} w={100} h={100} fill="green" />
+          <ckpage></ckpage>
+        </>
+      );
     }
   }, [showGrid, showRuler, currentPage]);
 
@@ -48,8 +51,6 @@ const CanvasContainer = () => {
     const canvas = canvasRef.current;
     if (canvas && !rendererRef.current) {
       try {
-        console.log("🚀 初始化SkiaLike渲染器");
-
         const renderer = createSkiaLikeRenderer(canvas);
         renderer.setCanvasSize(window.innerWidth, window.innerHeight);
 
@@ -83,9 +84,8 @@ const CanvasContainer = () => {
         globalEventManager.bindCanvasEvents(canvas);
 
         setIsInitialized(true);
-        console.log("✅ SkiaLike渲染器初始化完成");
       } catch (error) {
-        console.error("❌ SkiaLike渲染器初始化失败:", error);
+        //
       }
     }
   }, []);
@@ -122,62 +122,6 @@ const CanvasContainer = () => {
 
   return (
     <div className="canvas-container-wrapper" style={{ position: "relative" }}>
-      {/* 工具面板 */}
-      <div
-        style={{
-          position: "absolute",
-          top: "10px",
-          left: "10px",
-          zIndex: 1000,
-          background: "rgba(255, 255, 255, 0.9)",
-          padding: "10px",
-          borderRadius: "8px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          fontSize: "12px",
-          minWidth: "200px",
-        }}
-      >
-        <div style={{ color: "#2ecc71", fontWeight: "bold" }}>
-          ✅ 简化Skia风格Canvas (直接渲染)
-        </div>
-        <div style={{ fontSize: "10px", color: "#666" }}>
-          页面: {currentPage?.name || "无"} (
-          {currentPage?.children?.length || 0} 个子节点)
-        </div>
-        {viewState &&
-          (() => {
-            const scale = viewManager.getScale(viewState);
-            const translation = viewManager.getTranslation(viewState);
-            return (
-              <div style={{ fontSize: "10px", color: "#666" }}>
-                视图: 缩放 {scale.toFixed(2)} | 位移 (
-                {translation.pageX.toFixed(0)}, {translation.pageY.toFixed(0)})
-              </div>
-            );
-          })()}
-        <div style={{ fontSize: "10px", marginTop: "4px" }}>
-          <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <input
-              type="checkbox"
-              checked={showGrid}
-              onChange={(e) => setShowGrid(e.target.checked)}
-            />
-            显示网格
-          </label>
-          <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <input
-              type="checkbox"
-              checked={showRuler}
-              onChange={(e) => setShowRuler(e.target.checked)}
-            />
-            显示标尺
-          </label>
-        </div>
-        <div style={{ fontSize: "10px", color: "#999", marginTop: "4px" }}>
-          🎯 无中间层，直接Canvas渲染
-        </div>
-      </div>
-
       {/* Canvas区域 */}
       <div style={{ height: "100%", position: "relative" }}>
         <canvas

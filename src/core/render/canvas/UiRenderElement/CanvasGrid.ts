@@ -15,8 +15,6 @@ export class CanvasGrid extends CanvasElement<"canvas-grid"> {
   ): void {
     const { ctx, canvas } = context;
 
-    console.log("🎨 渲染Canvas网格");
-
     const gridSize = (this.props.gridSize as number) || 20;
     const strokeStyle = (this.props.strokeStyle as string) || "#e0e0e0";
     const lineWidth = (this.props.lineWidth as number) || 1;

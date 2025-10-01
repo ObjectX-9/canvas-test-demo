@@ -117,14 +117,12 @@ export class EventManager {
    */
   handleEvent(nativeEventType: string, event: Event): void {
     if (!this.context) {
-      console.warn("事件上下文未设置");
       return;
     }
 
     const handlers = this.handlersByNativeEvent.get(nativeEventType);
     if (!handlers || handlers.length === 0) {
       // 降级为debug级别，避免过多警告
-      console.debug(`未找到 ${nativeEventType} 事件的处理器`);
       return;
     }
 
@@ -134,7 +132,7 @@ export class EventManager {
         try {
           handler.handle(event, this.context);
         } catch (error) {
-          console.error(`事件处理器 ${handler.type} 执行出错:`, error);
+          //
         }
       }
     }

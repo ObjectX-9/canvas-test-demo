@@ -45,7 +45,6 @@ export class PageManager {
   switchToPage(pageId: string): boolean {
     const targetPage = nodeTree.getNodeById(pageId);
     if (!targetPage) {
-      console.warn(`页面 ${pageId} 不存在`);
       return false;
     }
 
@@ -57,8 +56,6 @@ export class PageManager {
     // 设置目标页面为活动状态
     (targetPage as PageNode).isActive = true;
     this.currentPageId = pageId;
-
-    console.log(`已切换到页面: ${targetPage.name} (${pageId})`);
     return true;
   }
 
@@ -79,13 +76,11 @@ export class PageManager {
   deletePage(pageId: string): boolean {
     const page = nodeTree.getNodeById(pageId);
     if (!page) {
-      console.warn(`页面 ${pageId} 不存在`);
       return false;
     }
 
     // 不能删除最后一个页面
     if (Object.keys(pageStore.getPage()).length <= 1) {
-      console.warn("不能删除最后一个页面");
       return false;
     }
 
@@ -105,7 +100,6 @@ export class PageManager {
     // 从页面管理器中移除
     pageStore.removePage(pageId);
 
-    console.log(`已删除页面: ${page.name} (${pageId})`);
     return true;
   }
 }

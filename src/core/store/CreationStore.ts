@@ -96,7 +96,7 @@ export class CreationStore {
       try {
         listener(this.creationMode, this.selectedNodeType);
       } catch (error) {
-        console.error("CreationStore listener error:", error);
+        //
       }
     });
   }

@@ -1,4 +1,3 @@
-import { NodeTree } from "@/core/nodeTree";
 import { createCanvasElement } from "../..";
 import { RenderContext, ViewTransform } from "../types";
 import { CanvasElement } from "./CanvasBaseElement";
@@ -15,7 +14,6 @@ export class CkPage extends CanvasElement<"ckpage"> {
     _context: RenderContext,
     _viewTransform?: ViewTransform
   ): void {
-    console.log("🎨 CkPage容器渲染");
     // 这里渲染下自己
     const ctx = this.ctx;
     ctx.save();
@@ -24,7 +22,6 @@ export class CkPage extends CanvasElement<"ckpage"> {
     ctx.restore();
 
     const currentPage = pageManager.getCurrentPage();
-    console.log("✅ ~ currentPage:", currentPage);
 
     currentPage?.children.forEach((child) => {
       const createElement = createCanvasElement("canvas-rect", this.canvas, {
@@ -38,7 +35,5 @@ export class CkPage extends CanvasElement<"ckpage"> {
 
       this.appendChild(createElement);
     });
-
-    console.log("✅ ~ this.children:", this.children);
   }
 }

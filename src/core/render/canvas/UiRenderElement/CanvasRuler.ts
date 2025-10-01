@@ -15,8 +15,6 @@ export class CanvasRuler extends CanvasElement<"canvas-ruler"> {
   ): void {
     const { ctx, canvas } = context;
 
-    console.log("📏 渲染Canvas标尺");
-
     const rulerSize = (this.props.rulerSize as number) || 25;
     const backgroundColor = (this.props.backgroundColor as string) || "#f0f0f0";
     const textColor = (this.props.textColor as string) || "#333";

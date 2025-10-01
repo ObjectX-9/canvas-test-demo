@@ -85,9 +85,4 @@ export function initializeEventSystem(): void {
 
   // 标记为已初始化
   globalEventManager.markInitialized();
-
-  console.log("事件系统已初始化", {
-    registeredHandlers: globalEventManager.getRegisteredHandlerNames(),
-    nativeEventTypes: globalEventManager.getRegisteredNativeEventTypes(),
-  });
 }

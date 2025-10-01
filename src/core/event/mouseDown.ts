@@ -49,11 +49,10 @@ export class MouseDownHandler implements IEventHandler {
         try {
           const handled = subHandler.handle(mouseEvent, context);
           if (handled) {
-            console.log(`mousedown事件被 ${subHandler.name} 处理`);
             return; // 事件已被处理，停止后续处理器
           }
         } catch (error) {
-          console.error(`子处理器 ${subHandler.name} 执行出错:`, error);
+          //
         }
       }
     }
@@ -69,8 +68,6 @@ export class MouseDownHandler implements IEventHandler {
     mouseEvent: MouseEvent,
     context: EventContext
   ): void {
-    console.log("执行默认mousedown行为：启动画布拖拽");
-
     // 启动画布拖拽
     context.isDragging.current = true;
     context.lastMousePosition.current = {

@@ -55,12 +55,6 @@ export class NodeDragHandler implements IEventHandler {
 
       // 🚀 立即触发渲染，实现流畅拖拽
       renderer.requestRender();
-
-      console.log(
-        `🎯 节点拖拽更新: ${node.id} -> (${newX.toFixed(1)}, ${newY.toFixed(
-          1
-        )})`
-      );
     }
   }
 }
@@ -95,7 +89,5 @@ export class NodeDragEndHandler implements IEventHandler {
 
     // 🔄 最终渲染，确保状态同步
     renderer.requestRender();
-
-    console.log("🏁 节点拖拽结束，最终渲染完成");
   }
 }

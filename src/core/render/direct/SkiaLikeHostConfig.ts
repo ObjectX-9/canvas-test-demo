@@ -26,7 +26,6 @@ export function createSkiaLikeHostConfig(renderer: {
 
     // 创建实例
     createInstance(type: string, props: CanvasElementProps): CanvasElement {
-      console.log(`🎨 创建Canvas实例: ${type}`, props);
       const canvasType = type as CanvasElementType;
       return createCanvasElement(canvasType, canvas, props);
     },
@@ -150,7 +149,6 @@ export function createSkiaLikeHostConfig(renderer: {
 
     resetAfterCommit(containerInfo: CanvasElement): void {
       // 提交后触发渲染
-      console.log("🎨 resetAfterCommit - 触发渲染");
       renderer.requestRender();
     },
 

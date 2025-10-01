@@ -70,11 +70,6 @@ export class NodeCreationHandler implements IMouseDownSubHandler {
     // 添加到节点树和页面
     nodeTree.addNode(nodeState);
     this.addNodeToPage(nodeState.id, pageId);
-
-    // 数据变更由React状态系统处理
-    console.log("点击创建节点完成");
-
-    console.log(`点击创建了 ${nodeType} 节点:`, nodeState);
   }
 
   /**
@@ -98,11 +93,6 @@ export class NodeCreationHandler implements IMouseDownSubHandler {
     // 添加到节点树（作为预览）
     nodeTree.addNode(previewNodeState);
     this.addNodeToPage(previewNodeState.id, pageId);
-
-    // 数据变更由React状态系统处理
-    console.log("预览节点创建完成");
-
-    console.log(`开始拖拽创建 ${nodeType} 节点`);
   }
 
   /**
@@ -135,10 +125,6 @@ export class NodeCreationHandler implements IMouseDownSubHandler {
       previewNode.y = startY;
       previewNode.w = width;
       previewNode.h = height;
-
-      // 通知渲染
-      // 数据变更由React状态系统处理
-      console.log("矩形创建完成");
     }
   }
 
@@ -152,8 +138,6 @@ export class NodeCreationHandler implements IMouseDownSubHandler {
 
     const previewNode = nodeTree.getNodeById(this.previewNodeId);
     if (previewNode) {
-      console.log(`拖拽创建完成，节点大小: ${previewNode.w}x${previewNode.h}`);
-
       // 如果拖拽区域太小，使用默认大小
       if (previewNode.w < 20 || previewNode.h < 20) {
         const defaultSize = this.getDefaultNodeSize(
@@ -168,9 +152,6 @@ export class NodeCreationHandler implements IMouseDownSubHandler {
     this.isDragging = false;
     this.dragStartPoint = null;
     this.previewNodeId = null;
-
-    // 数据变更由React状态系统处理
-    console.log("清理节点预览完成");
   }
 
   /**

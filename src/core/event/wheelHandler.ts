@@ -10,7 +10,6 @@ export class WheelHandler implements IEventHandler {
   }
 
   handle(event: Event, context: EventContext): void {
-    console.log("✅ ~  wheel event:", event);
     const wheelEvent = event as WheelEvent;
     const { currentPage, setViewState } = context;
 
