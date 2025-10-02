@@ -6,8 +6,8 @@ class CanvasRenderApi {
     this.ctx = canvas.getContext("2d")!;
   }
 
-  scale(pixelRatioX: number, pixelRatioY: number) {
-    this.ctx.scale(pixelRatioX, pixelRatioY);
+  scale(pixelRatioX: number, pixelRatioY?: number) {
+    this.ctx.scale(pixelRatioX, pixelRatioY || pixelRatioX);
   }
 
   translate(x: number, y: number) {
@@ -53,8 +53,8 @@ class CanvasRenderApi {
     height: number;
     radius?: number;
   }) {
-    this.ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-    if (rect.radius) {
+    if (rect.radius && rect.radius > 0) {
+      // 绘制圆角矩形
       this.ctx.beginPath();
       this.ctx.moveTo(rect.x + rect.radius, rect.y);
       this.ctx.lineTo(rect.x + rect.width - rect.radius, rect.y);
@@ -72,6 +72,19 @@ class CanvasRenderApi {
         rect.y + rect.height
       );
       this.ctx.lineTo(rect.x + rect.radius, rect.y + rect.height);
+      this.ctx.quadraticCurveTo(
+        rect.x,
+        rect.y + rect.height,
+        rect.x,
+        rect.y + rect.height - rect.radius
+      );
+      this.ctx.lineTo(rect.x, rect.y + rect.radius);
+      this.ctx.quadraticCurveTo(rect.x, rect.y, rect.x + rect.radius, rect.y);
+      this.ctx.closePath();
+      this.ctx.fill();
+    } else {
+      // 绘制普通矩形
+      this.ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
     }
   }
 

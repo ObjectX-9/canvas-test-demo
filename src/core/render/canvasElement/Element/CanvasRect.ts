@@ -14,13 +14,9 @@ export class CanvasRect extends CanvasElement<"canvas-rect", CanvasRectProps> {
     _viewTransform?: ViewTransform
   ): void {
     const { renderApi } = context;
-
     const { jsNode } = this.props;
 
-    if (!jsNode) return;
-
-    const visible = this.props.visible !== false;
-    if (!visible) return;
+    if (!jsNode || this.props.visible === false) return;
 
     const x = jsNode.x || 0;
     const y = jsNode.y || 0;
@@ -30,14 +26,8 @@ export class CanvasRect extends CanvasElement<"canvas-rect", CanvasRectProps> {
     const radius = jsNode.radius || 0;
 
     renderApi.save();
-
-    try {
-      // 设置填充颜色
-      renderApi.setFillStyle(fill);
-
-      renderApi.renderRect({ x, y, width: w, height: h, radius });
-    } finally {
-      renderApi.restore();
-    }
+    renderApi.setFillStyle(fill);
+    renderApi.renderRect({ x, y, width: w, height: h, radius });
+    renderApi.restore();
   }
 }

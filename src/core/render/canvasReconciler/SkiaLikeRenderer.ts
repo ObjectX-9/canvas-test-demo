@@ -134,14 +134,14 @@ export class SkiaLikeRenderer {
     // 统一设置像素比缩放和视图变换
     this.renderApi.save();
 
-    // 直接应用组合后的变换矩阵（包含像素比和视图变换）
+    // 应用变换矩阵（gl-matrix列主序 → Canvas 2D变换）
     this.renderApi.setTransform(
-      viewState.matrix[0] * this.pixelRatio, // scaleX * pixelRatio
-      viewState.matrix[1] * this.pixelRatio, // skewY * pixelRatio
-      viewState.matrix[2] * this.pixelRatio, // skewX * pixelRatio
-      viewState.matrix[3] * this.pixelRatio, // scaleY * pixelRatio
-      viewState.matrix[4] * this.pixelRatio, // translateX * pixelRatio
-      viewState.matrix[5] * this.pixelRatio // translateY * pixelRatio
+      viewState.matrix[0] * this.pixelRatio, // scaleX
+      viewState.matrix[1] * this.pixelRatio, // skewY
+      viewState.matrix[3] * this.pixelRatio, // skewX
+      viewState.matrix[4] * this.pixelRatio, // scaleY
+      viewState.matrix[6] * this.pixelRatio, // translateX
+      viewState.matrix[7] * this.pixelRatio // translateY
     );
 
     // 渲染根容器（会递归渲染所有子元素）
@@ -166,12 +166,12 @@ export class SkiaLikeRenderer {
       // 世界坐标模式：恢复完整的变换矩阵
       const viewState = coordinateSystemManager.getViewState();
       renderApi.setTransform(
-        viewState.matrix[0] * pixelRatio,
-        viewState.matrix[1] * pixelRatio,
-        viewState.matrix[2] * pixelRatio,
-        viewState.matrix[3] * pixelRatio,
-        viewState.matrix[4] * pixelRatio,
-        viewState.matrix[5] * pixelRatio
+        viewState.matrix[0] * pixelRatio, // a = scaleX * pixelRatio
+        viewState.matrix[1] * pixelRatio, // b = skewY * pixelRatio
+        viewState.matrix[3] * pixelRatio, // c = skewX * pixelRatio
+        viewState.matrix[4] * pixelRatio, // d = scaleY * pixelRatio
+        viewState.matrix[6] * pixelRatio, // e = translateX * pixelRatio
+        viewState.matrix[7] * pixelRatio // f = translateY * pixelRatio
       );
     }
   }

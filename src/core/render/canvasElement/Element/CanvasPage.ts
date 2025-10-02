@@ -11,25 +11,26 @@ import { CanvasPageProps } from "../../canvasReconciler/CanvasElementFactory";
  */
 export class CanvasPage extends CanvasElement<"canvas-page", CanvasPageProps> {
   readonly type = "canvas-page" as const;
+  private isInitialized = false;
 
   protected onRender(
     _context: RenderContext,
     _viewTransform?: ViewTransform
   ): void {
-    const pageSkiaDom = pageManager.getCurrentPage()?.skiaDom;
+    // 只在第一次渲染时初始化子元素，避免重复添加
+    if (!this.isInitialized) {
+      const pageSkiaDom = pageManager.getCurrentPage()?.skiaDom;
+      const { jsNode } = pageSkiaDom?.getProps() as CanvasPageProps;
 
-    const { jsNode } = pageSkiaDom?.getProps() as CanvasPageProps;
+      (jsNode as PageNode)?.children.forEach((_childId) => {
+        const child = nodeTree.getNodeById(_childId);
+        const skiaDom = child?.skiaDom;
+        if (skiaDom) {
+          this.appendChild(skiaDom);
+        }
+      });
 
-    (jsNode as PageNode)?.children.forEach((_childId) => {
-      const child = nodeTree.getNodeById(_childId);
-      console.log("✅ ~ child:", child);
-
-      const skiaDom = child?.skiaDom;
-      console.log("✅ ~ skiaDom:", skiaDom);
-
-      if (skiaDom) {
-        this.appendChild(skiaDom);
-      }
-    });
+      this.isInitialized = true;
+    }
   }
 }
