@@ -1,4 +1,4 @@
-import { RenderContext, ViewTransform } from "../types";
+import { RenderContext, ViewTransform, RenderMode } from "../types";
 import { CanvasElement } from "../Element/CanvasBaseElement";
 import { CanvasGridProps } from "../../canvasReconciler/CanvasElementFactory";
 
@@ -12,9 +12,10 @@ export class CanvasGrid extends CanvasElement<"canvas-grid", CanvasGridProps> {
 
   protected onRender(
     context: RenderContext,
-    viewTransform?: ViewTransform
+    _viewTransform?: ViewTransform
   ): void {
-    const { renderApi, canvas } = context;
+    const { renderApi, actualWidth, actualHeight, viewTransform, pixelRatio } =
+      context;
 
     const gridSize = this.props.gridSize || 20;
     const strokeStyle = this.props.strokeStyle || "#e0e0e0";
@@ -25,20 +26,21 @@ export class CanvasGrid extends CanvasElement<"canvas-grid", CanvasGridProps> {
 
     renderApi.save();
 
+    // 切换到屏幕坐标模式（网格应该在屏幕坐标系绘制）
+    renderApi.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
     try {
       renderApi.setStrokeStyle(strokeStyle);
       renderApi.setLineWidth(lineWidth);
 
-      // 获取视图变换信息
-      const scale = viewTransform?.scale || 1;
-      const offsetX = viewTransform?.offsetX || 0;
-      const offsetY = viewTransform?.offsetY || 0;
+      // 使用上下文中的视图变换信息
+      const { scale, offsetX, offsetY } = viewTransform;
 
-      // 根据缩放调整网格大小
+      // 计算缩放后的网格大小
       const scaledGridSize = gridSize * scale;
 
       // 如果网格太小或太大，就不绘制
-      if (scaledGridSize < 5 || scaledGridSize > 200) {
+      if (scaledGridSize < 2 || scaledGridSize > 200) {
         return;
       }
 
@@ -50,16 +52,16 @@ export class CanvasGrid extends CanvasElement<"canvas-grid", CanvasGridProps> {
 
       renderApi.beginPath();
 
-      // 绘制垂直线
-      for (let x = startX; x <= canvas.width; x += scaledGridSize) {
+      // 绘制垂直线（屏幕坐标）
+      for (let x = startX; x <= actualWidth; x += scaledGridSize) {
         renderApi.moveTo(x, 0);
-        renderApi.lineTo(x, canvas.height);
+        renderApi.lineTo(x, actualHeight);
       }
 
-      // 绘制水平线
-      for (let y = startY; y <= canvas.height; y += scaledGridSize) {
+      // 绘制水平线（屏幕坐标）
+      for (let y = startY; y <= actualHeight; y += scaledGridSize) {
         renderApi.moveTo(0, y);
-        renderApi.lineTo(canvas.width, y);
+        renderApi.lineTo(actualWidth, y);
       }
 
       renderApi.stroke();

@@ -25,6 +25,10 @@ export function initState(state: State) {
     state.element = baseElements;
     state.page = basePages;
     state.file = baseFile;
+
+    console.log("🔄 初始化状态数据:");
+    console.log("  🟡 Elements:", baseElements);
+    console.log("  🟢 Pages:", basePages);
   }
 
   // 文件数据
@@ -33,4 +37,6 @@ export function initState(state: State) {
   pageStore.setPage(state.page as Record<string, PageState>);
   // 节点数据
   elementStore.setElement(state.element as Record<string, BaseState>);
+
+  console.log("✅ 状态数据设置完成");
 }

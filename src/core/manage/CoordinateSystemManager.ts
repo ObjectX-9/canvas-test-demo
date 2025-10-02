@@ -40,11 +40,13 @@ export class CoordinateSystemManager {
    */
   updateViewPosition(deltaX: number, deltaY: number): void {
     const currentView = this.getViewState();
+
     const updatedView = viewManager.updateTranslation(
       currentView,
       deltaX,
       deltaY
     );
+
     this.setViewState(updatedView);
   }
 

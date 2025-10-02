@@ -7,12 +7,13 @@ export type ToolType =
   | "circle"
   | "text"
   | "pencil"
-  | "eraser";
+  | "eraser"
+  | "hand"; // 手动工具，用于移动画布
 
 /**
  * 工具模式定义
  */
-export type ToolMode = "idle" | "drawing" | "creating" | "dragging";
+export type ToolMode = "idle" | "drawing" | "creating" | "dragging" | "panning";
 
 /**
  * 画笔工具配置
@@ -114,6 +115,20 @@ export class ToolStore {
   }
 
   /**
+   * 检查是否为手动工具
+   */
+  isHandTool(): boolean {
+    return this.currentTool === "hand";
+  }
+
+  /**
+   * 检查是否在平移模式
+   */
+  isPanning(): boolean {
+    return this.currentMode === "panning";
+  }
+
+  /**
    * 检查是否在创建模式
    */
   isCreating(): boolean {
@@ -161,6 +176,7 @@ export class ToolStore {
       text: "文本",
       pencil: "画笔",
       eraser: "橡皮擦",
+      hand: "手动工具",
     };
 
     const modeLabels = {
@@ -168,6 +184,7 @@ export class ToolStore {
       drawing: "绘制中",
       creating: "创建中",
       dragging: "拖拽中",
+      panning: "平移中",
     };
 
     return `${toolLabels[this.currentTool]}工具 - ${

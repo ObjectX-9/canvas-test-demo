@@ -1,34 +1,4 @@
-import { RectangleState } from "../core/types/nodes/rectangleState";
-
-// 矩形元素模拟数据 - ID与页面children字段匹配
-export const mockRectangleData: RectangleState[] = [
-  {
-    id: "rect_001",
-    type: "rectangle",
-    name: "矩形1",
-    fill: "#4CAF50",
-    x: 150,
-    y: 120,
-    w: 200,
-    h: 100,
-    radius: 8,
-    rotation: 0,
-  },
-  {
-    id: "rect_002",
-    type: "rectangle",
-    name: "矩形2",
-    fill: "#2196F3",
-    x: 400,
-    y: 200,
-    w: 150,
-    h: 150,
-    radius: 16,
-    rotation: 15,
-  },
-];
-
-// 兼容旧版本的数据格式（保留备用）
+// 数据格式
 export const mockElementData = {
   "1": {
     id: "1",

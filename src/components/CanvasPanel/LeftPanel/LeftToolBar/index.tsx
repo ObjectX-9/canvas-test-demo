@@ -86,6 +86,15 @@ const LeftToolBar = () => {
         >
           🧽
         </button>
+
+        {/* 手动工具 */}
+        <button
+          className={getButtonClass("hand")}
+          onClick={() => handleToolClick("hand")}
+          title="手动工具 (H)"
+        >
+          ✋
+        </button>
       </div>
     </div>
   );

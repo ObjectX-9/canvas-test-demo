@@ -1,4 +1,4 @@
-import { RenderContext, ViewTransform } from "../types";
+import { RenderContext, ViewTransform, RenderMode } from "../types";
 import { CanvasElement } from "../Element/CanvasBaseElement";
 import { RenderApi } from "../../renderApi/type";
 import { CanvasRulerProps } from "../../canvasReconciler/CanvasElementFactory";
@@ -16,9 +16,10 @@ export class CanvasRuler extends CanvasElement<
 
   protected onRender(
     context: RenderContext,
-    viewTransform?: ViewTransform
+    _viewTransform?: ViewTransform
   ): void {
-    const { renderApi, canvas } = context;
+    const { renderApi, actualWidth, actualHeight, viewTransform, pixelRatio } =
+      context;
 
     const rulerSize = this.props.rulerSize || 25;
     const backgroundColor = this.props.backgroundColor || "#f0f0f0";
@@ -28,7 +29,11 @@ export class CanvasRuler extends CanvasElement<
 
     if (!visible) return;
 
+    // 标尺需要在屏幕坐标系绘制，所以需要临时重置变换
     renderApi.save();
+
+    // 重置变换为单位矩阵，只保留像素比缩放，使标尺始终固定在屏幕边缘
+    renderApi.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
     try {
       // 绘制标尺背景
@@ -36,20 +41,21 @@ export class CanvasRuler extends CanvasElement<
       renderApi.renderRect({
         x: 0,
         y: 0,
-        width: canvas.width,
+        width: actualWidth,
         height: rulerSize,
       });
       renderApi.renderRect({
         x: 0,
         y: 0,
         width: rulerSize,
-        height: canvas.height,
+        height: actualHeight,
       });
 
-      // 绘制刻度
+      // 绘制刻度（需要考虑当前的视图变换）
       this.drawRulerTicks(
         renderApi,
-        canvas,
+        actualWidth,
+        actualHeight,
         rulerSize,
         textColor,
         viewTransform
@@ -60,9 +66,9 @@ export class CanvasRuler extends CanvasElement<
       renderApi.setLineWidth(1);
       renderApi.beginPath();
       renderApi.moveTo(0, rulerSize);
-      renderApi.lineTo(canvas.width, rulerSize);
+      renderApi.lineTo(actualWidth, rulerSize);
       renderApi.moveTo(rulerSize, 0);
-      renderApi.lineTo(rulerSize, canvas.height);
+      renderApi.lineTo(rulerSize, actualHeight);
       renderApi.stroke();
     } finally {
       renderApi.restore();
@@ -71,35 +77,42 @@ export class CanvasRuler extends CanvasElement<
 
   private drawRulerTicks(
     renderApi: RenderApi,
-    canvas: HTMLCanvasElement,
+    canvasWidth: number,
+    canvasHeight: number,
     rulerSize: number,
     textColor: string,
-    viewTransform?: ViewTransform
+    viewTransform: ViewTransform
   ): void {
     renderApi.setFillStyle(textColor);
-    renderApi.setFont("10px sans-serif");
+    renderApi.setFont("12px sans-serif");
     renderApi.setTextAlign("center");
     renderApi.setTextBaseline("middle");
 
-    const scale = viewTransform?.scale || 1;
-    const offsetX = viewTransform?.offsetX || 0;
-    const offsetY = viewTransform?.offsetY || 0;
+    const { scale, offsetX, offsetY } = viewTransform;
 
-    let tickInterval = 50;
-    let minorTickInterval = 10;
+    // 根据缩放级别调整刻度间距
+    let tickInterval = 100; // 主刻度间距
+    let minorTickInterval = 20; // 次刻度间距
 
-    if (scale < 0.5) {
+    if (scale < 0.3) {
+      tickInterval = 500;
+      minorTickInterval = 100;
+    } else if (scale < 0.5) {
+      tickInterval = 200;
+      minorTickInterval = 50;
+    } else if (scale > 3) {
+      tickInterval = 50;
+      minorTickInterval = 10;
+    } else if (scale > 1.5) {
       tickInterval = 100;
       minorTickInterval = 20;
-    } else if (scale > 2) {
-      tickInterval = 25;
-      minorTickInterval = 5;
     }
 
+    // 计算世界坐标范围
     const worldStartX = -offsetX / scale;
-    const worldEndX = (canvas.width - offsetX) / scale;
+    const worldEndX = (canvasWidth - offsetX) / scale;
     const worldStartY = -offsetY / scale;
-    const worldEndY = (canvas.height - offsetY) / scale;
+    const worldEndY = (canvasHeight - offsetY) / scale;
 
     // 水平标尺
     const startTickX =
@@ -114,9 +127,9 @@ export class CanvasRuler extends CanvasElement<
     ) {
       const screenX = worldX * scale + offsetX;
 
-      if (screenX >= rulerSize && screenX <= canvas.width) {
+      if (screenX >= rulerSize && screenX <= canvasWidth) {
         const isMajorTick = worldX % tickInterval === 0;
-        const tickHeight = isMajorTick ? 8 : 4;
+        const tickHeight = isMajorTick ? 12 : 6;
 
         renderApi.beginPath();
         renderApi.moveTo(screenX, rulerSize - tickHeight);
@@ -125,7 +138,7 @@ export class CanvasRuler extends CanvasElement<
         renderApi.setLineWidth(1);
         renderApi.stroke();
 
-        if (isMajorTick && Math.abs(worldX) > 0.1) {
+        if (isMajorTick && Math.abs(worldX) >= 0.1) {
           renderApi.fillText(
             Math.round(worldX).toString(),
             screenX,
@@ -148,9 +161,9 @@ export class CanvasRuler extends CanvasElement<
     ) {
       const screenY = worldY * scale + offsetY;
 
-      if (screenY >= rulerSize && screenY <= canvas.height) {
+      if (screenY >= rulerSize && screenY <= canvasHeight) {
         const isMajorTick = worldY % tickInterval === 0;
-        const tickWidth = isMajorTick ? 8 : 4;
+        const tickWidth = isMajorTick ? 12 : 6;
 
         renderApi.beginPath();
         renderApi.moveTo(rulerSize - tickWidth, screenY);
@@ -159,7 +172,7 @@ export class CanvasRuler extends CanvasElement<
         renderApi.setLineWidth(1);
         renderApi.stroke();
 
-        if (isMajorTick && Math.abs(worldY) > 0.1) {
+        if (isMajorTick && Math.abs(worldY) >= 0.1) {
           renderApi.save();
           renderApi.translate(rulerSize / 2, screenY);
           renderApi.rotate(-Math.PI / 2);
@@ -173,23 +186,23 @@ export class CanvasRuler extends CanvasElement<
     const originScreenX = 0 * scale + offsetX;
     const originScreenY = 0 * scale + offsetY;
 
-    if (originScreenX >= rulerSize && originScreenX <= canvas.width) {
+    if (originScreenX >= rulerSize && originScreenX <= canvasWidth) {
       renderApi.setFillStyle("#ff0000");
       renderApi.renderRect({
-        x: originScreenX - 1,
+        x: originScreenX - 2,
         y: 0,
-        width: 2,
+        width: 4,
         height: rulerSize,
       });
     }
 
-    if (originScreenY >= rulerSize && originScreenY <= canvas.height) {
+    if (originScreenY >= rulerSize && originScreenY <= canvasHeight) {
       renderApi.setFillStyle("#ff0000");
       renderApi.renderRect({
         x: 0,
-        y: originScreenY - 1,
+        y: originScreenY - 2,
         width: rulerSize,
-        height: 2,
+        height: 4,
       });
     }
   }

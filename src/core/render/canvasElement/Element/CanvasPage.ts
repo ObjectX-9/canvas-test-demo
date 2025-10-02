@@ -22,8 +22,10 @@ export class CanvasPage extends CanvasElement<"canvas-page", CanvasPageProps> {
 
     (jsNode as PageNode)?.children.forEach((_childId) => {
       const child = nodeTree.getNodeById(_childId);
+      console.log("✅ ~ child:", child);
 
       const skiaDom = child?.skiaDom;
+      console.log("✅ ~ skiaDom:", skiaDom);
 
       if (skiaDom) {
         this.appendChild(skiaDom);

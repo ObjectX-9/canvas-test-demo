@@ -14,29 +14,16 @@ import {
  * 事件工厂 - 将原生DOM事件转换为标准化事件
  */
 class EventFactory {
-  static createMouseEvent(
-    nativeEvent: MouseEvent,
-    canvas: HTMLCanvasElement,
-    transform: (point: { x: number; y: number }) => { x: number; y: number }
-  ): CustomMouseEvent {
-    const rect = canvas.getBoundingClientRect();
+  static createMouseEvent(nativeEvent: MouseEvent): CustomMouseEvent {
     const point = {
-      x: nativeEvent.clientX - rect.left,
-      y: nativeEvent.clientY - rect.top,
+      x: nativeEvent.clientX,
+      y: nativeEvent.clientY,
     };
-    const canvasPoint = transform(point);
 
     return {
       type: this.getMouseEventType(nativeEvent.type),
       timestamp: Date.now(),
-      point,
-      canvasPoint,
-      button: nativeEvent.button,
-      buttons: nativeEvent.buttons,
-      altKey: nativeEvent.altKey,
-      ctrlKey: nativeEvent.ctrlKey,
-      metaKey: nativeEvent.metaKey,
-      shiftKey: nativeEvent.shiftKey,
+      mousePoint: point,
       canceled: false,
       propagationStopped: false,
       preventDefault: () => {
@@ -54,10 +41,6 @@ class EventFactory {
       timestamp: Date.now(),
       key: nativeEvent.key,
       code: nativeEvent.code,
-      altKey: nativeEvent.altKey,
-      ctrlKey: nativeEvent.ctrlKey,
-      metaKey: nativeEvent.metaKey,
-      shiftKey: nativeEvent.shiftKey,
       canceled: false,
       propagationStopped: false,
       preventDefault: () => {
@@ -103,7 +86,7 @@ export class EventSystem {
   private eventListeners = new Map<HTMLElement, Map<string, EventListener>>();
 
   private constructor() {
-    console.log("🔧 EventSystem 实例创建");
+    // console.log("🔧 EventSystem 实例创建");
   }
 
   /**
@@ -131,11 +114,8 @@ export class EventSystem {
    */
   initialize(context: EventContext): void {
     if (this.isActive && this.context?.canvas === context.canvas) {
-      console.log("⚠️ 事件系统已在同一canvas上激活，跳过重复初始化");
       return;
     }
-
-    console.log("🚀 初始化事件系统");
 
     // 清理旧的绑定
     this.cleanup();
@@ -148,7 +128,6 @@ export class EventSystem {
     this.bindDOMEvents(context.canvas);
 
     this.isActive = true;
-    console.log("✅ 事件系统初始化完成");
   }
 
   /**
@@ -177,7 +156,8 @@ export class EventSystem {
     keyboardEvents.forEach((eventType) => {
       const listener = (e: Event) => this.handleDOMEvent(e as KeyboardEvent);
       window.addEventListener(eventType, listener);
-      listeners.set(eventType, listener);
+      // 使用特殊前缀标记这些是window事件
+      listeners.set(`window:${eventType}`, listener);
     });
 
     this.eventListeners.set(canvas, listeners);
@@ -195,11 +175,7 @@ export class EventSystem {
 
     // 转换为标准化事件
     if (nativeEvent instanceof MouseEvent) {
-      event = EventFactory.createMouseEvent(
-        nativeEvent,
-        this.context.canvas,
-        this.context.transform.screenToCanvas
-      );
+      event = EventFactory.createMouseEvent(nativeEvent);
     } else {
       event = EventFactory.createKeyboardEvent(nativeEvent);
     }
@@ -213,10 +189,6 @@ export class EventSystem {
    */
   private async processEvent(event: BaseEvent): Promise<void> {
     if (!this.context) return;
-
-    console.log(
-      `🎯 处理事件: ${event.type}, 当前状态: ${this.interactionState}`
-    );
 
     try {
       // 通过中间件处理事件
@@ -281,7 +253,6 @@ export class EventSystem {
         );
 
         if (result.handled) {
-          console.log(`✅ 事件被处理器 "${handler.name}" 处理`);
           return result;
         }
       } catch (error) {
@@ -299,8 +270,6 @@ export class EventSystem {
     if (this.interactionState !== state) {
       const oldState = this.interactionState;
       this.interactionState = state;
-
-      console.log(`🔄 交互状态变化: ${oldState} -> ${state}`);
 
       // 发布状态变化事件
       this.eventEmitter.emit("state:changed", {
@@ -320,12 +289,8 @@ export class EventSystem {
     );
     if (existingIndex >= 0) {
       this.handlers[existingIndex] = handler;
-      console.log(`🔄 更新事件处理器: ${handler.name}`);
     } else {
       this.handlers.push(handler);
-      console.log(
-        `➕ 注册事件处理器: ${handler.name} (优先级: ${handler.priority})`
-      );
     }
 
     // 按优先级排序
@@ -339,7 +304,6 @@ export class EventSystem {
     const index = this.handlers.findIndex((h) => h.name === name);
     if (index >= 0) {
       this.handlers.splice(index, 1);
-      console.log(`➖ 移除事件处理器: ${name}`);
     }
   }
 
@@ -348,7 +312,6 @@ export class EventSystem {
    */
   registerMiddleware(middleware: EventMiddleware): void {
     this.middlewares.push(middleware);
-    console.log(`🔌 注册中间件: ${middleware.name}`);
   }
 
   /**
@@ -371,14 +334,15 @@ export class EventSystem {
   private cleanup(): void {
     if (!this.isActive) return;
 
-    console.log("🧹 清理事件系统绑定");
-
     // 移除所有DOM事件监听器
     this.eventListeners.forEach((listeners, element) => {
       listeners.forEach((listener, eventType) => {
-        if (eventType in ["keydown", "keyup"]) {
-          window.removeEventListener(eventType, listener);
+        if (eventType.startsWith("window:")) {
+          // 从window移除键盘事件
+          const actualEventType = eventType.replace("window:", "");
+          window.removeEventListener(actualEventType, listener);
         } else {
+          // 从canvas元素移除鼠标事件
           element.removeEventListener(eventType, listener);
         }
       });
@@ -392,8 +356,6 @@ export class EventSystem {
    * 销毁事件系统
    */
   destroy(): void {
-    console.log("💥 销毁事件系统");
-
     this.cleanup();
     this.eventEmitter.removeAllListeners();
     this.handlers = [];

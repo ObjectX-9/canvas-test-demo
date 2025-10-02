@@ -1,6 +1,6 @@
 export interface RenderApi {
   // 画布相关
-  scale(pixelRatio: number): void;
+  scale(pixelRatioX: number, pixelRatioY: number): void;
   setCanvasSize(width: number, height: number): void;
   translate(x: number, y: number): void;
   save(): void;

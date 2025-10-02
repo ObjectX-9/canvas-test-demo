@@ -13,7 +13,6 @@ export { EventSystem, EventSystemInitializer };
 export * from "./types";
 
 // 导出处理器和中间件
-export * from "./handlers/ToolHandlers";
 export * from "./middlewares";
 
 // 创建全局实例

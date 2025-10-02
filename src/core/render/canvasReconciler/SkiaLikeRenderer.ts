@@ -2,7 +2,11 @@ import React from "react";
 import Reconciler from "react-reconciler";
 import { createSkiaLikeHostConfig } from "./SkiaLikeHostConfig";
 import { CanvasElement } from "../canvasElement/Element/CanvasBaseElement";
-import { RenderContext, ViewTransform } from "../canvasElement/types";
+import {
+  RenderContext,
+  ViewTransform,
+  RenderMode,
+} from "../canvasElement/types";
 import { viewManager, coordinateSystemManager } from "../../manage";
 import { RenderApi } from "../renderApi/type";
 import logger from "@/core/utils/logerHelper";
@@ -38,7 +42,6 @@ export class SkiaLikeRenderer {
 
     // 创建根容器
     this.rootContainer = createCanvasElement("canvas-page", canvas, {});
-    console.log("✅ ~ this.rootContainer:", this.rootContainer);
   }
 
   /**
@@ -79,7 +82,7 @@ export class SkiaLikeRenderer {
     this.canvas.height = height * this.pixelRatio;
     this.canvas.style.width = width + "px";
     this.canvas.style.height = height + "px";
-    this.renderApi.scale(this.pixelRatio);
+    // 注意：不在这里设置 scale，而是在 performRender 中统一处理
   }
 
   /**
@@ -107,29 +110,70 @@ export class SkiaLikeRenderer {
     const scale = viewManager.getScale(viewState);
     const translation = viewManager.getTranslation(viewState);
 
-    // 创建视图变换
+    // 计算实际画布尺寸（考虑像素比）
+    const actualWidth = this.canvas.width / this.pixelRatio;
+    const actualHeight = this.canvas.height / this.pixelRatio;
+
+    // 创建完整的视图变换信息
     const viewTransform: ViewTransform = {
       scale,
       offsetX: translation.pageX,
       offsetY: translation.pageY,
     };
 
-    // 创建渲染上下文
+    // 创建增强的渲染上下文
     const renderContext: RenderContext = {
       canvas: this.canvas,
       renderApi: this.renderApi,
       pixelRatio: this.pixelRatio,
+      actualWidth,
+      actualHeight,
+      viewTransform,
     };
 
-    // 应用视图变换并渲染所有元素
+    // 统一设置像素比缩放和视图变换
     this.renderApi.save();
-    this.renderApi.translate(translation.pageX, translation.pageY);
-    this.renderApi.scale(scale);
+
+    // 直接应用组合后的变换矩阵（包含像素比和视图变换）
+    this.renderApi.setTransform(
+      viewState.matrix[0] * this.pixelRatio, // scaleX * pixelRatio
+      viewState.matrix[1] * this.pixelRatio, // skewY * pixelRatio
+      viewState.matrix[2] * this.pixelRatio, // skewX * pixelRatio
+      viewState.matrix[3] * this.pixelRatio, // scaleY * pixelRatio
+      viewState.matrix[4] * this.pixelRatio, // translateX * pixelRatio
+      viewState.matrix[5] * this.pixelRatio // translateY * pixelRatio
+    );
 
     // 渲染根容器（会递归渲染所有子元素）
-    this.rootContainer.render(renderContext, viewTransform);
+    this.rootContainer.render(renderContext);
 
     this.renderApi.restore();
+  }
+
+  /**
+   * 切换渲染模式的辅助方法
+   * 供子组件调用，用于在世界坐标和屏幕坐标之间切换
+   */
+  switchRenderMode(
+    renderApi: RenderApi,
+    mode: RenderMode,
+    pixelRatio: number
+  ): void {
+    if (mode === RenderMode.SCREEN) {
+      // 切换到屏幕坐标模式：重置所有变换，只保留像素比缩放
+      renderApi.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    } else {
+      // 世界坐标模式：恢复完整的变换矩阵
+      const viewState = coordinateSystemManager.getViewState();
+      renderApi.setTransform(
+        viewState.matrix[0] * pixelRatio,
+        viewState.matrix[1] * pixelRatio,
+        viewState.matrix[2] * pixelRatio,
+        viewState.matrix[3] * pixelRatio,
+        viewState.matrix[4] * pixelRatio,
+        viewState.matrix[5] * pixelRatio
+      );
+    }
   }
 
   /**

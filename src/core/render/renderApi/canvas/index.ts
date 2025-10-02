@@ -6,8 +6,8 @@ class CanvasRenderApi {
     this.ctx = canvas.getContext("2d")!;
   }
 
-  scale(pixelRatio: number) {
-    this.ctx.scale(pixelRatio, pixelRatio);
+  scale(pixelRatioX: number, pixelRatioY: number) {
+    this.ctx.scale(pixelRatioX, pixelRatioY);
   }
 
   translate(x: number, y: number) {

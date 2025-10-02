@@ -39,7 +39,6 @@ const CanvasContainer = ({ eventSystemInitializer }: CanvasContainerProps) => {
     const canvas = canvasRef.current;
     if (canvas && !rendererRef.current) {
       try {
-        console.log("🎨 初始化渲染引擎...");
         const renderer = initRenderingEngine(canvas);
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -48,7 +47,6 @@ const CanvasContainer = ({ eventSystemInitializer }: CanvasContainerProps) => {
         rendererRef.current = renderer;
 
         // 初始化新的事件系统
-        console.log("🚀 初始化事件系统...");
         eventSystemInitializer.initialize(canvas);
 
         // 监听渲染请求
@@ -57,8 +55,6 @@ const CanvasContainer = ({ eventSystemInitializer }: CanvasContainerProps) => {
 
         // 渲染初始UI
         renderSkiaLikeUI();
-
-        console.log("✅ Canvas容器初始化完成");
       } catch (error) {
         console.error("❌ 渲染器或事件系统初始化失败:", error);
       }
