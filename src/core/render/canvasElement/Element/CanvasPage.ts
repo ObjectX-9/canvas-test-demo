@@ -20,13 +20,6 @@ export class CanvasPage extends CanvasElement<"canvas-page", CanvasPageProps> {
 
     const { jsNode } = pageSkiaDom?.getProps() as CanvasPageProps;
 
-    // 这里渲染下自己
-    const { renderApi } = _context;
-    renderApi.save();
-    renderApi.setFillStyle("red");
-    renderApi.renderRect({ x: 0, y: 0, width: 100, height: 100 });
-    renderApi.restore();
-
     (jsNode as PageNode)?.children.forEach((_childId) => {
       const child = nodeTree.getNodeById(_childId);
 

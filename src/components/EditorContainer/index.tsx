@@ -2,6 +2,7 @@ import CanvasContainer from "@/core/render/CanvasContainer";
 import HeaderToolBar from "../CanvasPanel/HeaderToolBar";
 import CanvasPanelLeft from "../CanvasPanel/LeftPanel";
 import CanvasPanelRight from "../CanvasPanel/RightPanel";
+import { eventSystemInitializer } from "@/core/event";
 
 const EditorContainer = () => {
   return (
@@ -18,7 +19,7 @@ const EditorContainer = () => {
 
       {/* 主画布区域 */}
       <div className="min-w-0 overflow-hidden">
-        <CanvasContainer />
+        <CanvasContainer eventSystemInitializer={eventSystemInitializer} />
       </div>
 
       {/* 右侧面板 */}

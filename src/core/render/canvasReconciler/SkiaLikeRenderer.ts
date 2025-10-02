@@ -38,6 +38,7 @@ export class SkiaLikeRenderer {
 
     // 创建根容器
     this.rootContainer = createCanvasElement("canvas-page", canvas, {});
+    console.log("✅ ~ this.rootContainer:", this.rootContainer);
   }
 
   /**
