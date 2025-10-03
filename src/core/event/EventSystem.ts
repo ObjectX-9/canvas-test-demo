@@ -3,6 +3,8 @@ import {
   BaseEvent,
   MouseEvent as CustomMouseEvent,
   KeyboardEvent as CustomKeyboardEvent,
+  GestureEvent as CustomGestureEvent,
+  TouchEvent as CustomTouchEvent,
   EventHandler,
   EventResult,
   EventContext,
@@ -10,14 +12,33 @@ import {
   InteractionState,
 } from "./types";
 
+// 原生手势事件接口（主要用于Safari）
+interface NativeGestureEvent extends Event {
+  scale: number;
+  rotation?: number;
+  clientX?: number;
+  clientY?: number;
+}
+
+// 原生触摸事件接口
+interface NativeTouchEvent extends Event {
+  touches: TouchList;
+  changedTouches?: TouchList;
+  targetTouches?: TouchList;
+}
+
 /**
  * 事件工厂 - 将原生DOM事件转换为标准化事件
  */
 class EventFactory {
   static createMouseEvent(nativeEvent: MouseEvent): CustomMouseEvent {
+    // 获取相对于canvas的坐标
+    const rect = (
+      nativeEvent.target as HTMLCanvasElement
+    )?.getBoundingClientRect();
     const point = {
-      x: nativeEvent.clientX,
-      y: nativeEvent.clientY,
+      x: rect ? nativeEvent.clientX - rect.left : nativeEvent.clientX,
+      y: rect ? nativeEvent.clientY - rect.top : nativeEvent.clientY,
     };
 
     return {
@@ -26,6 +47,7 @@ class EventFactory {
       mousePoint: point,
       canceled: false,
       propagationStopped: false,
+      nativeEvent, // 保留原生事件引用
       preventDefault: () => {
         nativeEvent.preventDefault();
       },
@@ -41,6 +63,53 @@ class EventFactory {
       timestamp: Date.now(),
       key: nativeEvent.key,
       code: nativeEvent.code,
+      canceled: false,
+      propagationStopped: false,
+      nativeEvent, // 保留原生事件引用
+      preventDefault: () => {
+        nativeEvent.preventDefault();
+      },
+      stopPropagation: () => {
+        nativeEvent.stopPropagation();
+      },
+    };
+  }
+
+  static createGestureEvent(
+    nativeEvent: NativeGestureEvent
+  ): CustomGestureEvent {
+    const centerX = nativeEvent.clientX || 0;
+    const centerY = nativeEvent.clientY || 0;
+
+    return {
+      type: this.getGestureEventType(nativeEvent.type),
+      timestamp: Date.now(),
+      scale: nativeEvent.scale || 1,
+      centerPoint: { x: centerX, y: centerY },
+      canceled: false,
+      propagationStopped: false,
+      preventDefault: () => {
+        nativeEvent.preventDefault();
+      },
+      stopPropagation: () => {
+        nativeEvent.stopPropagation();
+      },
+    };
+  }
+
+  static createTouchEvent(nativeEvent: NativeTouchEvent): CustomTouchEvent {
+    const touches = Array.from(nativeEvent.touches || []).map(
+      (touch: Touch) => ({
+        x: touch.clientX,
+        y: touch.clientY,
+        identifier: touch.identifier,
+      })
+    );
+
+    return {
+      type: this.getTouchEventType(nativeEvent.type),
+      timestamp: Date.now(),
+      touches,
       canceled: false,
       propagationStopped: false,
       preventDefault: () => {
@@ -64,6 +133,32 @@ class EventFactory {
         return "mouse.wheel";
       default:
         return "mouse.move";
+    }
+  }
+
+  private static getGestureEventType(type: string): CustomGestureEvent["type"] {
+    switch (type) {
+      case "gesturestart":
+        return "gesture.start";
+      case "gesturechange":
+        return "gesture.change";
+      case "gestureend":
+        return "gesture.end";
+      default:
+        return "gesture.change";
+    }
+  }
+
+  private static getTouchEventType(type: string): CustomTouchEvent["type"] {
+    switch (type) {
+      case "touchstart":
+        return "touch.start";
+      case "touchmove":
+        return "touch.move";
+      case "touchend":
+        return "touch.end";
+      default:
+        return "touch.move";
     }
   }
 }
@@ -139,7 +234,42 @@ export class EventSystem {
     // 鼠标事件
     const mouseEvents = ["mousedown", "mousemove", "mouseup", "wheel"];
     mouseEvents.forEach((eventType) => {
-      const listener = (e: Event) => this.handleDOMEvent(e as MouseEvent);
+      const listener = (e: Event) => {
+        // 对滚轮事件进行特殊处理，阻止浏览器默认缩放
+        if (eventType === "wheel") {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        this.handleDOMEvent(e as MouseEvent);
+      };
+      canvas.addEventListener(eventType, listener, { passive: false });
+      listeners.set(eventType, listener);
+    });
+
+    // 手势事件（Safari触控板）
+    const gestureEvents = ["gesturestart", "gesturechange", "gestureend"];
+    gestureEvents.forEach((eventType) => {
+      const listener = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleDOMEvent(e);
+      };
+      canvas.addEventListener(eventType, listener, { passive: false });
+      listeners.set(eventType, listener);
+    });
+
+    // 触摸事件（多点触控）
+    const touchEvents = ["touchstart", "touchmove", "touchend"];
+    touchEvents.forEach((eventType) => {
+      const listener = (e: Event) => {
+        // 只有多点触控时才处理，单点触控保留默认行为
+        const touchEvent = e as NativeTouchEvent;
+        if (touchEvent.touches && touchEvent.touches.length > 1) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.handleDOMEvent(e);
+        }
+      };
       canvas.addEventListener(eventType, listener, { passive: false });
       listeners.set(eventType, listener);
     });
@@ -167,7 +297,7 @@ export class EventSystem {
    * 处理DOM事件
    */
   private async handleDOMEvent(
-    nativeEvent: MouseEvent | KeyboardEvent
+    nativeEvent: MouseEvent | KeyboardEvent | Event
   ): Promise<void> {
     if (!this.context || !this.isActive) return;
 
@@ -176,8 +306,16 @@ export class EventSystem {
     // 转换为标准化事件
     if (nativeEvent instanceof MouseEvent) {
       event = EventFactory.createMouseEvent(nativeEvent);
-    } else {
+    } else if (nativeEvent instanceof KeyboardEvent) {
       event = EventFactory.createKeyboardEvent(nativeEvent);
+    } else if (nativeEvent.type.startsWith("gesture")) {
+      event = EventFactory.createGestureEvent(
+        nativeEvent as NativeGestureEvent
+      );
+    } else if (nativeEvent.type.startsWith("touch")) {
+      event = EventFactory.createTouchEvent(nativeEvent as NativeTouchEvent);
+    } else {
+      return; // 未知事件类型
     }
 
     // 处理事件

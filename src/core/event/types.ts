@@ -17,6 +17,8 @@ export interface BaseEvent {
   canceled: boolean;
   // 是否停止冒泡
   propagationStopped: boolean;
+  // 原生DOM事件引用
+  nativeEvent?: Event;
 }
 
 // 鼠标事件
@@ -25,6 +27,28 @@ export interface MouseEvent extends BaseEvent {
   type: "mouse.down" | "mouse.move" | "mouse.up" | "mouse.wheel";
   // 鼠标位置
   mousePoint: { x: number; y: number };
+  // 原生事件引用 (继承自BaseEvent，这里可以更具体化类型)
+  nativeEvent?: globalThis.MouseEvent | WheelEvent;
+}
+
+// 手势事件（Safari触控板缩放）
+export interface GestureEvent extends BaseEvent {
+  type: "gesture.start" | "gesture.change" | "gesture.end";
+  // 缩放比例
+  scale: number;
+  // 中心点
+  centerPoint: { x: number; y: number };
+  // 原生事件引用 (继承自BaseEvent，这里可以更具体化类型)
+  nativeEvent?: Event;
+}
+
+// 触摸事件（多点触控）
+export interface TouchEvent extends BaseEvent {
+  type: "touch.start" | "touch.move" | "touch.end";
+  // 触摸点
+  touches: Array<{ x: number; y: number; identifier: number }>;
+  // 原生事件引用 (继承自BaseEvent，这里可以更具体化类型)
+  nativeEvent?: globalThis.TouchEvent;
 }
 
 // 键盘事件
@@ -34,6 +58,8 @@ export interface KeyboardEvent extends BaseEvent {
   key: string;
   // 按键代码
   code: string;
+  // 原生事件引用 (继承自BaseEvent，这里可以更具体化类型)
+  nativeEvent?: globalThis.KeyboardEvent;
 }
 
 // 交互状态

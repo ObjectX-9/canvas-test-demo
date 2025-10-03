@@ -23,8 +23,8 @@ const CanvasContainer = ({ eventSystemInitializer }: CanvasContainerProps) => {
       rendererRef.current.render(
         <>
           <canvas-grid></canvas-grid>
-          <canvas-ruler></canvas-ruler>
           <canvas-page></canvas-page>
+          <canvas-ruler></canvas-ruler>
         </>
       );
     }

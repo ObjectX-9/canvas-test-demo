@@ -24,7 +24,7 @@ export class CanvasPanHandler implements EventHandler {
   // 临时平移模式（按住空格键时启用）
   private isTemporaryPanMode = false;
 
-  canHandle(event: BaseEvent, state: InteractionState): boolean {
+  canHandle(_event: BaseEvent, _state: InteractionState): boolean {
     if (toolStore.getCurrentTool() !== "hand") {
       return false;
     }
@@ -52,7 +52,7 @@ export class CanvasPanHandler implements EventHandler {
 
   private handleMouseDown(
     event: MouseEvent,
-    context: EventContext
+    _context: EventContext
   ): EventResult {
     this.isPanning = true;
     this.lastPanPoint = { ...event.mousePoint };
@@ -66,7 +66,7 @@ export class CanvasPanHandler implements EventHandler {
 
   private handleMouseMove(
     event: MouseEvent,
-    context: EventContext
+    _context: EventContext
   ): EventResult {
     if (!this.isPanning || !this.lastPanPoint) {
       return {
@@ -93,7 +93,10 @@ export class CanvasPanHandler implements EventHandler {
     };
   }
 
-  private handleMouseUp(event: MouseEvent, context: EventContext): EventResult {
+  private handleMouseUp(
+    _event: MouseEvent,
+    _context: EventContext
+  ): EventResult {
     this.isPanning = false;
     this.lastPanPoint = null;
     return {
@@ -103,7 +106,7 @@ export class CanvasPanHandler implements EventHandler {
     };
   }
 
-  private handleKeyDown(event: BaseEvent, context: EventContext): EventResult {
+  private handleKeyDown(event: BaseEvent, _context: EventContext): EventResult {
     const keyEvent = event as unknown as KeyboardEvent;
 
     // 空格键启用临时平移模式
@@ -122,7 +125,7 @@ export class CanvasPanHandler implements EventHandler {
     return { handled: false };
   }
 
-  private handleKeyUp(event: BaseEvent, context: EventContext): EventResult {
+  private handleKeyUp(event: BaseEvent, _context: EventContext): EventResult {
     const keyEvent = event as unknown as KeyboardEvent;
 
     console.log(
