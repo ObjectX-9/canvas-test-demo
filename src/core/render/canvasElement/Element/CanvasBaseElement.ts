@@ -34,8 +34,15 @@ export abstract class CanvasElement<
    * 添加子元素
    */
   appendChild(child: CanvasElement): void {
-    child.parent = this;
-    this.children.push(child);
+    // 避免重复添加
+    if (!this.children.includes(child) && child.parent !== this) {
+      // 如果子元素已经有父元素，先从原父元素移除
+      if (child.parent) {
+        child.parent.removeChild(child);
+      }
+      child.parent = this;
+      this.children.push(child);
+    }
   }
 
   /**

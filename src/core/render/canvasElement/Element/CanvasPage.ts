@@ -22,7 +22,7 @@ export class CanvasPage extends CanvasElement<"canvas-page", CanvasPageProps> {
       const pageSkiaDom = pageManager.getCurrentPage()?.skiaDom;
       const { jsNode } = pageSkiaDom?.getProps() as CanvasPageProps;
 
-      (jsNode as PageNode)?.children.forEach((_childId) => {
+      jsNode?.children.forEach((_childId) => {
         const child = nodeTree.getNodeById(_childId);
         const skiaDom = child?.skiaDom;
         if (skiaDom) {
