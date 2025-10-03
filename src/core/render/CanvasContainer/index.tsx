@@ -24,6 +24,7 @@ const CanvasContainer = ({ eventSystemInitializer }: CanvasContainerProps) => {
         <>
           <canvas-grid></canvas-grid>
           <canvas-page></canvas-page>
+          <canvas-selection></canvas-selection>
           <canvas-ruler></canvas-ruler>
         </>
       );

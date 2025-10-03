@@ -1,7 +1,7 @@
 import { EventSystem } from "./EventSystem";
 
 import { EventContext } from "./types";
-import { CanvasPanHandler, CanvasZoomHandler } from "./handlers";
+import { CanvasPanHandler, CanvasZoomHandler, CanvasSelectionHandler } from "./handlers";
 
 /**
  * 事件系统初始化器
@@ -50,8 +50,9 @@ export class EventSystemInitializer {
    */
   private registerHandlers(): void {
     // 按优先级注册处理器（优先级高的先执行）
-    this.eventSystem.registerHandler(new CanvasPanHandler()); // 110
-    this.eventSystem.registerHandler(new CanvasZoomHandler()); // 100
+    this.eventSystem.registerHandler(new CanvasZoomHandler()); // 120
+    this.eventSystem.registerHandler(new CanvasPanHandler()); // 110  
+    this.eventSystem.registerHandler(new CanvasSelectionHandler()); // 80
   }
 
   /**

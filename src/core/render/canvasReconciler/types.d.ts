@@ -63,6 +63,11 @@ declare global {
         visible?: boolean;
         children?: React.ReactNode;
       };
+
+      "canvas-selection": {
+        visible?: boolean;
+        children?: React.ReactNode;
+      };
     }
   }
 }

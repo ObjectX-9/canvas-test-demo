@@ -1,4 +1,4 @@
-import { CanvasGrid, CanvasRuler } from "../canvasElement/UiRenderElement";
+import { CanvasGrid, CanvasRuler, CanvasSelection } from "../canvasElement/UiRenderElement";
 import { CanvasRect } from "../canvasElement/Element/CanvasRect";
 import { CanvasPage } from "../canvasElement/Element/CanvasPage";
 import { Rectangle } from "@/core/nodeTree/node/rectangle";
@@ -11,6 +11,7 @@ import { BaseNode } from "@/core/nodeTree/node/baseNode";
 export type CanvasElementType =
   | "canvas-grid"
   | "canvas-ruler"
+  | "canvas-selection"
   | "canvas-page"
   | "canvas-rect";
 
@@ -47,6 +48,18 @@ export interface CanvasRulerProps extends BaseCanvasElementProps {
 }
 
 /**
+ * Canvas选择框元素属性
+ */
+export interface CanvasSelectionProps extends BaseCanvasElementProps {
+  strokeStyle?: string;
+  fillStyle?: string;
+  lineWidth?: number;  
+  lineDash?: number[];
+  selectedStrokeStyle?: string;
+  selectedLineWidth?: number;
+}
+
+/**
  * Canvas页面元素属性
  */
 export interface CanvasPageProps extends BaseCanvasElementProps {
@@ -76,6 +89,7 @@ export interface CanvasRectProps extends BaseCanvasElementProps {
 export type CanvasElementProps =
   | CanvasGridProps
   | CanvasRulerProps
+  | CanvasSelectionProps
   | CanvasPageProps
   | CanvasRectProps;
 
@@ -88,6 +102,11 @@ export const createCanvasRuler = (
   canvas: HTMLCanvasElement,
   props: CanvasRulerProps
 ): CanvasRuler => new CanvasRuler(canvas, props);
+
+export const createCanvasSelection = (
+  canvas: HTMLCanvasElement,
+  props: CanvasSelectionProps
+): CanvasSelection => new CanvasSelection(canvas, props);
 
 export const createCkPage = (
   canvas: HTMLCanvasElement,
@@ -111,6 +130,10 @@ export type CanvasElementCreatorMap = {
     canvas: HTMLCanvasElement,
     props: CanvasRulerProps
   ) => CanvasRuler;
+  "canvas-selection": (
+    canvas: HTMLCanvasElement,
+    props: CanvasSelectionProps
+  ) => CanvasSelection;
   "canvas-page": (
     canvas: HTMLCanvasElement,
     props: CanvasPageProps
@@ -127,6 +150,7 @@ export type CanvasElementCreatorMap = {
 export type CanvasElementPropsMap = {
   "canvas-grid": CanvasGridProps;
   "canvas-ruler": CanvasRulerProps;
+  "canvas-selection": CanvasSelectionProps;
   "canvas-page": CanvasPageProps;
   "canvas-rect": CanvasRectProps;
 };
@@ -137,6 +161,7 @@ export type CanvasElementPropsMap = {
 const CanvasElements: CanvasElementCreatorMap = {
   "canvas-grid": createCanvasGrid,
   "canvas-ruler": createCanvasRuler,
+  "canvas-selection": createCanvasSelection,
   "canvas-page": createCkPage,
   "canvas-rect": createCanvasRect,
 };
