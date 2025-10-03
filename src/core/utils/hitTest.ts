@@ -1,4 +1,4 @@
-import { BaseState } from "../types/nodes/baseState";
+import { BaseNode } from "../nodeTree/node/baseNode";
 
 /**
  * 点击检测工具
@@ -7,12 +7,12 @@ export class HitTestUtils {
   /**
    * 检测点是否在矩形节点内
    * @param point 世界坐标系中的点
-   * @param node 节点数据
+   * @param node 节点对象
    * @returns 是否命中
    */
   static isPointInRectangle(
     point: { x: number; y: number },
-    node: BaseState
+    node: BaseNode
   ): boolean {
     const { x, y, w, h, rotation } = node;
 
@@ -50,12 +50,12 @@ export class HitTestUtils {
   /**
    * 检测点是否在节点内（支持不同类型的节点）
    * @param point 世界坐标系中的点
-   * @param node 节点数据
+   * @param node 节点对象
    * @returns 是否命中
    */
   static isPointInNode(
     point: { x: number; y: number },
-    node: BaseState
+    node: BaseNode
   ): boolean {
     switch (node.type) {
       case "rectangle":
@@ -69,13 +69,13 @@ export class HitTestUtils {
   /**
    * 从节点列表中找到被点击的节点（按z-index从高到低查找）
    * @param point 世界坐标系中的点
-   * @param nodes 节点列表
+   * @param nodes 节点对象列表
    * @returns 被点击的节点，如果没有则返回null
    */
   static findNodeAtPoint(
     point: { x: number; y: number },
-    nodes: BaseState[]
-  ): BaseState | null {
+    nodes: BaseNode[]
+  ): BaseNode | null {
     // 从后往前查找（后面的节点层级更高）
     for (let i = nodes.length - 1; i >= 0; i--) {
       const node = nodes[i];

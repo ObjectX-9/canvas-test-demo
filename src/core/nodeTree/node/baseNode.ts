@@ -75,4 +75,18 @@ export class BaseNode {
   changeFills() {
     this.fill = "#eeddss";
   }
+
+  /**
+   * 获取节点完整状态
+   */
+  getState(): BaseState {
+    return { ...this._state };
+  }
+
+  /**
+   * 更新节点状态
+   */
+  updateState(newState: Partial<BaseState>): void {
+    this._state = { ...this._state, ...newState };
+  }
 }

@@ -11,6 +11,8 @@ import { selectionStore } from "../../store/SelectionStore";
 import { HitTestUtils } from "../../utils/hitTest";
 import { elementStore } from "../../store/ElementStore";
 import { coordinateSystemManager } from "../../manage";
+import { nodeTree } from "../../nodeTree";
+import { BaseNode } from "../../nodeTree/node/baseNode";
 
 /**
  * 画布选择处理器
@@ -241,14 +243,20 @@ export class CanvasSelectionHandler implements EventHandler {
     this.isDragging = false;
   }
 
-  private getAllRenderableNodes() {
-    // 获取当前页面的所有节点
+  private getAllRenderableNodes(): BaseNode[] {
+    // 获取当前页面的所有节点对象
     const elements = elementStore.getElement();
-    return Object.values(elements);
+    return Object.keys(elements).map((nodeId) => {
+      const node = nodeTree.getNodeById(nodeId);
+      if (!node) {
+        throw new Error(`找不到节点: ${nodeId}`);
+      }
+      return node as BaseNode;
+    });
   }
 
   private isNodeInSelectionBox(
-    node: { x: number; y: number; w: number; h: number },
+    node: BaseNode,
     selectionBox: { left: number; right: number; top: number; bottom: number }
   ): boolean {
     const nodeLeft = node.x;
