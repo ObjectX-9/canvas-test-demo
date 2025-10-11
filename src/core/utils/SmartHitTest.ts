@@ -1,4 +1,5 @@
 import { BaseNode } from "../nodeTree/node/baseNode";
+import { ViewportAwareSpatialGrid } from "./ViewportAwareSpatialGrid";
 
 /**
  * 节点选择优先级
@@ -160,18 +161,35 @@ export class SpatialGrid {
  */
 export class SmartHitTest {
   private spatialGrid: SpatialGrid;
+  private viewportGrid: ViewportAwareSpatialGrid;
   private performanceMode = false;
+  private useViewportOptimization = true; // 🎯 新增：启用视口优化
   private lastRebuildTime = 0;
   private readonly REBUILD_INTERVAL = 5000; // 5秒重建一次空间网格
+  private currentCanvas: HTMLCanvasElement | null = null;
 
   constructor(cellSize = 200) {
     this.spatialGrid = new SpatialGrid(cellSize);
+    this.viewportGrid = new ViewportAwareSpatialGrid();
   }
 
   /**
    * 初始化或重建空间网格
    */
-  initialize(nodes: BaseNode[]): void {
+  initialize(nodes: BaseNode[], canvas?: HTMLCanvasElement): void {
+    // 🎯 优先使用视口感知网格
+    if (this.useViewportOptimization && canvas) {
+      this.currentCanvas = canvas;
+      const viewportChanged = this.viewportGrid.updateViewport(canvas);
+
+      if (viewportChanged) {
+        this.viewportGrid.rebuild(nodes);
+        console.log(`🌐 视口网格已重建，包含 ${nodes.length} 个节点`);
+        return;
+      }
+    }
+
+    // 备用：传统全局网格
     const now = Date.now();
     if (
       now - this.lastRebuildTime > this.REBUILD_INTERVAL ||
@@ -300,14 +318,25 @@ export class SmartHitTest {
    */
   findBestNodeAtPoint(
     point: { x: number; y: number },
-    allNodes: BaseNode[]
+    allNodes: BaseNode[],
+    canvas?: HTMLCanvasElement
   ): BaseNode | null {
-    this.initialize(allNodes);
+    this.initialize(allNodes, canvas);
 
     // 第一步：空间分区预筛选
-    const candidates = this.performanceMode
-      ? this.spatialGrid.getCandidateNodes(point)
-      : allNodes;
+    let candidates: BaseNode[];
+
+    if (this.useViewportOptimization && this.currentCanvas) {
+      // 🎯 使用视口感知网格
+      candidates = this.viewportGrid.getCandidateNodes(point);
+      console.log(`🎯 视口网格候选: ${candidates.length}/${allNodes.length}`);
+    } else if (this.performanceMode) {
+      // 传统空间分区
+      candidates = this.spatialGrid.getCandidateNodes(point);
+    } else {
+      // 全节点遍历
+      candidates = allNodes;
+    }
 
     if (candidates.length === 0) {
       return null;
@@ -358,14 +387,27 @@ export class SmartHitTest {
   findNodesInRectangle(
     selectionRect: { x: number; y: number; width: number; height: number },
     allNodes: BaseNode[],
-    mode: SelectionMode = SelectionMode.INTERSECTS
+    mode: SelectionMode = SelectionMode.INTERSECTS,
+    canvas?: HTMLCanvasElement
   ): BaseNode[] {
-    this.initialize(allNodes);
+    this.initialize(allNodes, canvas);
 
     // 空间分区预筛选
-    const candidates = this.performanceMode
-      ? this.spatialGrid.getCandidateNodesInRect(selectionRect)
-      : allNodes;
+    let candidates: BaseNode[];
+
+    if (this.useViewportOptimization && this.currentCanvas) {
+      // 🎯 使用视口感知网格
+      candidates = this.viewportGrid.getCandidateNodesInRect(selectionRect);
+      console.log(
+        `📦 视口网格框选候选: ${candidates.length}/${allNodes.length}`
+      );
+    } else if (this.performanceMode) {
+      // 传统空间分区
+      candidates = this.spatialGrid.getCandidateNodesInRect(selectionRect);
+    } else {
+      // 全节点遍历
+      candidates = allNodes;
+    }
 
     const selectedNodes: BaseNode[] = [];
     const left = selectionRect.x;
@@ -393,7 +435,9 @@ export class SmartHitTest {
 
         case SelectionMode.CENTER:
           // 节点中心点在选择框内
+          // eslint-disable-next-line no-case-declarations
           const centerX = nodeLeft + node.w / 2;
+          // eslint-disable-next-line no-case-declarations
           const centerY = nodeTop + node.h / 2;
           isSelected =
             centerX >= left &&
@@ -429,6 +473,27 @@ export class SmartHitTest {
   setPerformanceMode(enabled: boolean): void {
     this.performanceMode = enabled;
     console.log(`⚡ 性能模式: ${enabled ? "开启" : "关闭"}`);
+  }
+
+  /**
+   * 视口优化切换
+   */
+  setViewportOptimization(enabled: boolean): void {
+    this.useViewportOptimization = enabled;
+    console.log(`🎯 视口优化: ${enabled ? "开启" : "关闭"}`);
+  }
+
+  /**
+   * 获取网格统计信息
+   */
+  getGridStats() {
+    return {
+      viewportGrid: this.viewportGrid.getStats(),
+      spatialGrid: {
+        useViewportOptimization: this.useViewportOptimization,
+        performanceMode: this.performanceMode,
+      },
+    };
   }
 
   /**

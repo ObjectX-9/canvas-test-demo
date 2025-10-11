@@ -140,9 +140,9 @@ export class SmartSelectionHandler implements EventHandler {
     // 获取所有可渲染节点
     const allNodes = this.getAllRenderableNodes();
 
-    // 🎯 核心：使用智能碰撞检测
+    // 🎯 核心：使用智能碰撞检测（传递canvas以启用视口优化）
     const hitNode = this.enableSmartPriority
-      ? smartHitTest.findBestNodeAtPoint(worldPoint, allNodes)
+      ? smartHitTest.findBestNodeAtPoint(worldPoint, allNodes, _context.canvas)
       : this.fallbackHitTest(worldPoint, allNodes);
 
     const selectionTime = performance.now() - startTime;
@@ -317,12 +317,13 @@ export class SmartSelectionHandler implements EventHandler {
       )}, ${bottom.toFixed(1)})`
     );
 
-    // 🎯 核心：使用智能框选检测
+    // 🎯 核心：使用智能框选检测（传递canvas以启用视口优化）
     const allNodes = this.getAllRenderableNodes();
     const selectedNodes = smartHitTest.findNodesInRectangle(
       selectionRect,
       allNodes,
-      this.selectionMode
+      this.selectionMode,
+      document.querySelector("canvas") as HTMLCanvasElement // 获取canvas元素
     );
 
     const feedback: SelectionFeedback = {
