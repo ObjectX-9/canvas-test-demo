@@ -9,6 +9,7 @@ import { PageNode } from "./node/pageNode";
 import { elementStore } from "../store/ElementStore";
 import { pageStore } from "../store/PageStore";
 import { SkiaNode } from "./node/skiaNode";
+import { pageManager } from "../manage/PageManager";
 
 export class NodeTree {
   private nodes: Map<string, SkiaNode> = new Map();
@@ -43,6 +44,15 @@ export class NodeTree {
       } else {
         // 将 nodeState 添加到 elementStore
         elementStore.addElement(nodeState.id, nodeState);
+
+        // 自动将非页面节点添加到当前页面的children中
+        const currentPage = pageManager.getCurrentPage();
+        if (currentPage && !currentPage.children.includes(nodeState.id)) {
+          currentPage.addChild(nodeState.id);
+          console.log(
+            `🌲 节点 ${nodeState.id} (${nodeState.type}) 已自动添加到页面 ${currentPage.id}`
+          );
+        }
       }
     }
   }
@@ -57,6 +67,15 @@ export class NodeTree {
         pageStore.removePage(id);
       } else {
         elementStore.removeElement(id);
+
+        // 从当前页面的children中移除
+        const currentPage = pageManager.getCurrentPage();
+        if (currentPage && currentPage.children.includes(id)) {
+          currentPage.removeChild(id);
+          console.log(
+            `🌲 节点 ${id} (${node.type}) 已从页面 ${currentPage.id} 中移除`
+          );
+        }
       }
     }
   }

@@ -1,4 +1,3 @@
-import { PageNode } from "@/core/nodeTree/node/pageNode";
 import { RenderContext, ViewTransform } from "../types";
 import { CanvasElement } from "./CanvasBaseElement";
 import { nodeTree } from "@/core/nodeTree";
@@ -11,26 +10,42 @@ import { CanvasPageProps } from "../../canvasReconciler/CanvasElementFactory";
  */
 export class CanvasPage extends CanvasElement<"canvas-page", CanvasPageProps> {
   readonly type = "canvas-page" as const;
-  private isInitialized = false;
+  private renderedChildren = new Set<string>();
 
   protected onRender(
     _context: RenderContext,
     _viewTransform?: ViewTransform
   ): void {
-    // 只在第一次渲染时初始化子元素，避免重复添加
-    if (!this.isInitialized) {
-      const pageSkiaDom = pageManager.getCurrentPage()?.skiaDom;
-      const { jsNode } = pageSkiaDom?.getProps() as CanvasPageProps;
+    // 获取当前页面的所有子元素
+    const currentPage = pageManager.getCurrentPage();
+    if (!currentPage) return;
 
-      jsNode?.children.forEach((_childId) => {
-        const child = nodeTree.getNodeById(_childId);
+    const currentChildren = new Set(currentPage.children);
+
+    // 添加新的子元素
+    currentChildren.forEach((childId) => {
+      if (!this.renderedChildren.has(childId)) {
+        const child = nodeTree.getNodeById(childId);
         const skiaDom = child?.skiaDom;
         if (skiaDom) {
           this.appendChild(skiaDom);
+          this.renderedChildren.add(childId);
+          console.log(`🟢 页面添加子元素: ${childId}`);
         }
-      });
+      }
+    });
 
-      this.isInitialized = true;
-    }
+    // 移除不再存在的子元素
+    this.renderedChildren.forEach((childId) => {
+      if (!currentChildren.has(childId)) {
+        const child = nodeTree.getNodeById(childId);
+        const skiaDom = child?.skiaDom;
+        if (skiaDom) {
+          this.removeChild(skiaDom);
+          this.renderedChildren.delete(childId);
+          console.log(`🟢 页面移除子元素: ${childId}`);
+        }
+      }
+    });
   }
 }
