@@ -5,6 +5,7 @@ import {
   CanvasPanHandler,
   CanvasZoomHandler,
   CanvasSelectionHandler,
+  SmartSelectionHandler,
   CanvasDragHandler,
   CanvasRectCreateHandler,
 } from "./handlers";
@@ -60,7 +61,10 @@ export class EventSystemInitializer {
     this.eventSystem.registerHandler(new CanvasPanHandler()); // 110
     this.eventSystem.registerHandler(new CanvasRectCreateHandler()); // 95
     this.eventSystem.registerHandler(new CanvasDragHandler()); // 90
-    this.eventSystem.registerHandler(new CanvasSelectionHandler()); // 80
+    // 🧠 Figma风格的智能选择系统
+    this.eventSystem.registerHandler(new SmartSelectionHandler()); // 80
+    // 保留原有选择器作为备用
+    // this.eventSystem.registerHandler(new CanvasSelectionHandler()); // 80
   }
 
   /**
